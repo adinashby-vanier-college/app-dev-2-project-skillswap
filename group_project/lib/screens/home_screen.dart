@@ -20,6 +20,10 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  void _openMessages() {
+    Navigator.pushNamed(context, '/conversations');
+  }
+
   @override
   Widget build(BuildContext context) {
     final name = _user?.displayName?.trim();
@@ -73,7 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
           children: [
-            // Greeting
             Row(
               children: [
                 CircleAvatar(
@@ -120,8 +123,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 16),
-
-            // Search
             TextField(
               controller: _searchCtrl,
               decoration: InputDecoration(
@@ -146,8 +147,6 @@ class _HomeScreenState extends State<HomeScreen> {
               onSubmitted: (q) {},
             ),
             const SizedBox(height: 18),
-
-            // Quick actions grid
             _sectionTitle('Quick actions'),
             const SizedBox(height: 10),
             GridView.count(
@@ -180,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icons.message_outlined,
                   label: 'Messages',
                   color: Colors.purple,
-                  onTap: () {},
+                  onTap: _openMessages,
                 ),
                 _featureCard(
                   icon: Icons.event_outlined,
@@ -196,10 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-
             const SizedBox(height: 20),
-
-            // Recent matches (horizontal)
             _sectionTitle('Recent matches'),
             const SizedBox(height: 10),
             SizedBox(
@@ -213,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     initials: 'U$i',
                     title: 'User $i',
                     subtitle: i.isEven ? 'Guitar' : 'Java',
-                    onTap: () {},
+                    onTap: _openMessages,
                   );
                 },
               ),
@@ -221,11 +217,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-
-      // Bottom navigation (stub)
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
-        onDestinationSelected: (i) => setState(() => _currentIndex = i),
+        onDestinationSelected: (i) {
+          if (i == 1) {
+            _openMessages();
+            return;
+          }
+          setState(() => _currentIndex = i);
+        },
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.message_outlined), selectedIcon: Icon(Icons.message), label: 'Messages'),
