@@ -70,7 +70,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final email = widget.email ?? AuthService.instance.currentUserEmail ?? '';
+    final email = widget.email ?? AuthService.instance.currentUserEmail ?? 'No email found';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F6F7),
