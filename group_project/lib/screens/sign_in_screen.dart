@@ -86,7 +86,9 @@ class _SignInScreenState extends State<SignInScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/signUp');
+                    },
                     icon: const Icon(Icons.alternate_email),
                     label: const Text("Twitter"),
                   ),
@@ -107,7 +109,9 @@ class _SignInScreenState extends State<SignInScreen> {
                     child: const Text("Forgot Password?"),
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/signUp');
+                    },
                     child: const Text(
                       "Sign Up",
                       style: TextStyle(color: CustomColors.primaryRed),
