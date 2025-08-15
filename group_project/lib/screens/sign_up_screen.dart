@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import 'verify_email_screen.dart';
 
@@ -39,11 +40,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Future<void> _submit() async {
-    debugPrint('👉 _submit called');
     final ok = _formKey.currentState?.validate() ?? false;
     if (!ok) return;
     if (!_agreed) {
-      debugPrint('❌ Terms not agreed');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please accept Terms and Privacy Policy')),
       );
@@ -52,21 +51,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     setState(() => _loading = true);
     try {
-      final _authService = AuthService();
       final email = _emailCtrl.text.trim();
       final pwd = _pwdCtrl.text;
 
       // Step 1: Create account
-      debugPrint('👉 Creating account for $email');
       await AuthService.instance.signUpWithEmail(email, pwd);
 
       // Step 2: Send verification email
-      debugPrint('👉 Sending verification email...');
       await AuthService.instance.sendEmailVerification();
 
       if (!mounted) return;
-
-      debugPrint('👉 Navigating to VerifyEmailScreen');
 
       // Step 3: Navigate to verification page
       Navigator.of(context).pushReplacement(
@@ -74,8 +68,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
           builder: (_) => VerifyEmailScreen(email: email),
         ),
       );
+    } on FirebaseAuthException catch (e) {
+      String message;
+      if (e.code == 'email-already-in-use') {
+        message = 'This email is already registered. Please sign in instead.';
+      } else {
+        message = e.message ?? 'An unexpected error occurred. Please try again.';
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
     } catch (e) {
-      debugPrint('❌ Sign up failed: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
@@ -117,6 +123,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           controller: _emailCtrl,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
+                          autocorrect: false,
+                          textCapitalization: TextCapitalization.none,
                           decoration: const InputDecoration(
                             labelText: 'Email',
                             hintText: 'Your email address',
