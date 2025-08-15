@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import 'home_screen.dart';
 import 'sign_in_screen.dart';
@@ -12,20 +13,13 @@ class VerifyEmailScreen extends StatefulWidget {
 }
 
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
-  final _codeCtrl = TextEditingController(); // optional: keep for future OTP
   bool _checking = false;
   bool _resending = false;
 
-  @override
-  void dispose() {
-    _codeCtrl.dispose();
-    super.dispose();
-  }
-
   Future<void> _checkVerified() async {
+    if (_checking) return;
     setState(() => _checking = true);
     try {
-      // If you switch to OTP later, validate _codeCtrl.text here.
       final isVerified = await AuthService.instance.reloadAndCheckEmailVerified();
       if (!mounted) return;
 
@@ -35,33 +29,66 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               (r) => false,
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Not verified yet. Please click the link in your email.')),
-        );
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text('Not verified yet. Please click the link in your email.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+      }
+    } on FirebaseAuthException catch (e) {
+      final msg = switch (e.code) {
+        'too-many-requests' => 'Too many attempts. Please wait and try again.',
+        _ => e.message ?? 'Failed to check verification. Please try again.'
+      };
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(msg)));
       }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Check failed: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text('Check failed: $e')));
+      }
     } finally {
       if (mounted) setState(() => _checking = false);
     }
   }
 
   Future<void> _resend() async {
+    if (_resending) return;
     setState(() => _resending = true);
     try {
       await AuthService.instance.sendEmailVerification();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Verification email has been resent.')),
-      );
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Verification email has been resent.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+    } on FirebaseAuthException catch (e) {
+      final msg = switch (e.code) {
+        'too-many-requests' => 'Too many requests. Please wait before trying again.',
+        _ => e.message ?? 'Failed to resend verification email.'
+      };
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(msg)));
+      }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Resend failed: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text('Resend failed: $e')));
+      }
     } finally {
       if (mounted) setState(() => _resending = false);
     }
@@ -74,10 +101,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F6F7),
-      appBar: AppBar(
-        title: const Text('Verify Email'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Verify Email'), centerTitle: true),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -100,26 +124,11 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Please open your mailbox and click the verification link.\n'
-                        'If you switch to a numeric OTP later, paste it below.',
+                    'Please open your mailbox and click the verification link.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black54),
                   ),
-                  const SizedBox(height: 20),
-
-                  // Optional 6-digit field (not needed for Firebase link verification)
-                  TextField(
-                    controller: _codeCtrl,
-                    maxLength: 6,
-                    textAlign: TextAlign.center,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      counterText: '',
-                      hintText: 'Enter 6-digit code (optional)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
 
                   SizedBox(
                     height: 48,
@@ -131,10 +140,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                       child: _checking
                           ? const SizedBox(
-                        width: 22, height: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2.4, valueColor: AlwaysStoppedAnimation(Colors.white)),
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        ),
                       )
-                          : const Text('Verify & Continue'),
+                          : const Text('Verified & Continue'),
                     ),
                   ),
                   const SizedBox(height: 12),
