@@ -1,10 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'screens/sign_in_screen.dart';
-import 'screens/sign_up_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/conversations_screen.dart';
-import 'screens/archived_chats_screen.dart';
+import 'features/auth/sign_in_screen.dart';
+import 'features/auth/sign_up_screen.dart';
+import 'features/home/home_screen.dart';
+import 'features/chat/conversations_screen.dart';
+import 'features/chat/archived_chats_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

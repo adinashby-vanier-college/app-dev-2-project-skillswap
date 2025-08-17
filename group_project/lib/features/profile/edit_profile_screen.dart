@@ -1,4 +1,4 @@
-// lib/screens/edit_profile_screen.dart
+// lib/features/edit_profile_screen.dart
 // Final Edit Profile screen with avatar picker, validation, Firebase Auth/Firestore/Storage integration.
 // Comments are in English only (as requested).
 
@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import '../utils/custom_colors.dart';
+import '../../utils/custom_colors.dart';
 
 
 class EditProfileScreen extends StatefulWidget {

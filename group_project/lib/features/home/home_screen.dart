@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'edit_profile_screen.dart';
-import 'matches_screen.dart';
+import '../profile/edit_profile_screen.dart';
+import '../matches/matches_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

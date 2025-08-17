@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/conversation_preview.dart';
-import '../models/message.dart';
-import '../mock/mock_conversations.dart';
+import 'models/conversation_preview.dart';
+import 'models/message.dart';
+import 'mock/mock_conversations.dart';
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

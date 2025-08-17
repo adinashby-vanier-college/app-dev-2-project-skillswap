@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../models/conversation_preview.dart';
-import '../services/chat_service.dart';
+import 'models/conversation_preview.dart';
+import 'chat_service.dart';
 import 'chat_screen.dart';
-import '../widgets/profile_avatar.dart';
+import '../../../widgets/profile_avatar.dart';
 
 class ConversationsScreen extends StatefulWidget {
   const ConversationsScreen({super.key});

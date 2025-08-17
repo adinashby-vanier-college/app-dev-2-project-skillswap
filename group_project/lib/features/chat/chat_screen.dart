@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../widgets/chat_bubble.dart';
-import '../utils/loading_spinner.dart';
-import '../models/message.dart';
-import '../services/chat_service.dart';
+import '../../../widgets/chat_bubble.dart';
+import '../../../utils/loading_spinner.dart';
+import 'models/message.dart';
+import 'chat_service.dart';
 
 class ChatScreen extends StatefulWidget {
   final String conversationId;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import '../utils/custom_colors.dart';
-import '../widgets/custom_button.dart';
+import 'auth_service.dart';
+import '../../utils/custom_colors.dart';
+import '../../widgets/custom_button.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
