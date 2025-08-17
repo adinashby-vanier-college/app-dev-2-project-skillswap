@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'edit_profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,6 +14,17 @@ class _HomeScreenState extends State<HomeScreen> {
   final _searchCtrl = TextEditingController();
 
   User? get _user => FirebaseAuth.instance.currentUser;
+
+  Future<void> _openEditProfile() async {
+    final updated = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+    );
+    if (updated == true) {
+      await FirebaseAuth.instance.currentUser?.reload();
+      setState(() {});
+    }
+  }
 
   @override
   void dispose() {
@@ -28,6 +40,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final name = _user?.displayName?.trim();
     final email = _user?.email ?? '';
+
+    final photo = _user?.photoURL ?? '';
+    final initialTop = (name?.isNotEmpty == true
+        ? name!.characters.first
+        : (email.isNotEmpty ? email.characters.first : 'U'))
+        .toUpperCase();
+
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FC),
@@ -59,7 +78,8 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             tooltip: 'Notifications',
-            icon: const Icon(Icons.notifications_outlined, color: Colors.black87),
+            icon: const Icon(
+                Icons.notifications_outlined, color: Colors.black87),
             onPressed: () {},
           ),
           IconButton(
@@ -74,164 +94,166 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-          children: [
-            Row(
+          child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: Colors.indigo.shade100,
-                  child: Text(
-                    (name?.isNotEmpty == true
-                        ? name!.characters.first
-                        : (email.isNotEmpty ? email.characters.first : 'U'))
-                        .toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.indigo,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome${name?.isNotEmpty == true ? ', $name' : ''} 👋',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Colors.indigo.shade100,
+                      backgroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
+                      child: photo.isEmpty
+                          ? Text(
+                        initialTop,
                         style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
+                          color: Colors.indigo,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
                         ),
-                      ),
-                      Text(
-                        email,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 12.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _searchCtrl,
-              decoration: InputDecoration(
-                hintText: 'Search skills, people, topics…',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: Colors.indigo),
-                ),
-              ),
-              onSubmitted: (q) {},
-            ),
-            const SizedBox(height: 18),
-            _sectionTitle('Quick actions'),
-            const SizedBox(height: 10),
-            GridView.count(
-              crossAxisCount: 2,
-              childAspectRatio: 1.1,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              physics: const NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
-              children: [
-                _featureCard(
-                  icon: Icons.person_outline,
-                  label: 'Edit Profile',
-                  color: Colors.indigo,
-                  onTap: () {},
-                ),
-                _featureCard(
-                  icon: Icons.school_outlined,
-                  label: 'Edit Skills',
-                  color: Colors.teal,
-                  onTap: () {},
-                ),
-                _featureCard(
-                  icon: Icons.people_outline,
-                  label: 'Matches',
-                  color: Colors.deepOrange,
-                  onTap: () {},
-                ),
-                _featureCard(
-                  icon: Icons.message_outlined,
-                  label: 'Messages',
-                  color: Colors.purple,
-                  onTap: _openMessages,
-                ),
-                _featureCard(
-                  icon: Icons.event_outlined,
-                  label: 'Sessions',
-                  color: Colors.blueGrey,
-                  onTap: () {},
-                ),
-                _featureCard(
-                  icon: Icons.settings_outlined,
-                  label: 'Settings',
-                  color: Colors.blue,
-                  onTap: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _sectionTitle('Recent matches'),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 110,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: 10,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (context, i) {
-                  return _matchChip(
-                    initials: 'U$i',
-                    title: 'User $i',
-                    subtitle: i.isEven ? 'Guitar' : 'Java',
-                    onTap: _openMessages,
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (i) {
-          if (i == 1) {
-            _openMessages();
-            return;
-          }
-          setState(() => _currentIndex = i);
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.message_outlined), selectedIcon: Icon(Icons.message), label: 'Messages'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
+                      )
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+
+                    Expanded(
+    child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+    Text(
+    'Welcome${name?.isNotEmpty == true ? ', $name' : ''} 👋',
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    style: const TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    ),
+    ),
+    Text(
+    email,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    style: TextStyle(
+    color: Colors.grey.shade600,
+    fontSize: 12.5,
+    ),
+    ),
+    ],
+    ),
+    ),
+    ],
+    ),
+    const SizedBox(height: 16),
+    TextField(
+    controller: _searchCtrl,
+    decoration: InputDecoration(
+    hintText: 'Search skills, people, topics…',
+    prefixIcon: const Icon(Icons.search),
+    filled: true,
+    fillColor: Colors.white,
+    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+    border: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(14),
+    borderSide: BorderSide(color: Colors.grey.shade300),
+    ),
+    enabledBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(14),
+    borderSide: BorderSide(color: Colors.grey.shade300),
+    ),
+    focusedBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(14),
+    borderSide: const BorderSide(color: Colors.indigo),
+    ),
+    ),
+    onSubmitted: (q) {},
+    ),
+    const SizedBox(height: 18),
+    _sectionTitle('Quick actions'),
+    const SizedBox(height: 10),
+    GridView.count(
+    crossAxisCount: 2,
+    childAspectRatio: 1.1,
+    crossAxisSpacing: 14,
+    mainAxisSpacing: 14,
+    physics: const NeverScrollableScrollPhysics(),
+    shrinkWrap: true,
+    children: [
+    _featureCard(
+    icon: Icons.person_outline,
+    label: 'Edit Profile',
+    color: Colors.indigo,
+    onTap: _openEditProfile,
+    ),
+
+    _featureCard(
+    icon: Icons.school_outlined,
+    label: 'Edit Skills',
+    color: Colors.teal,
+    onTap: () {},
+    ),
+    _featureCard(
+    icon: Icons.people_outline,
+    label: 'Matches',
+    color: Colors.deepOrange,
+    onTap: () {},
+    ),
+    _featureCard(
+    icon: Icons.message_outlined,
+    label: 'Messages',
+    color: Colors.purple,
+    onTap: _openMessages,
+    ),
+    _featureCard(
+    icon: Icons.event_outlined,
+    label: 'Sessions',
+    color: Colors.blueGrey,
+    onTap: () {},
+    ),
+    _featureCard(
+    icon: Icons.settings_outlined,
+    label: 'Settings',
+    color: Colors.blue,
+    onTap: () {},
+    ),
+    ],
+    ),
+    const SizedBox(height: 20),
+    _sectionTitle('Recent matches'),
+    const SizedBox(height: 10),
+    SizedBox(
+    height: 110,
+    child: ListView.separated(
+    scrollDirection: Axis.horizontal,
+    itemCount: 10,
+    separatorBuilder: (_, __) => const SizedBox(width: 12),
+    itemBuilder: (context, i) {
+    return _matchChip(
+    initials: 'U$i',
+    title: 'User $i',
+    subtitle: i.isEven ? 'Guitar' : 'Java',
+    onTap: _openMessages,
+    );
+    },
+    ),
+    ),
+    ],
+    ),
+    ),
+    bottomNavigationBar: NavigationBar(
+    selectedIndex: _currentIndex,
+    onDestinationSelected: (i) {
+    if (i == 1) {
+    _openMessages();
+    return;
+    }
+    setState(() => _currentIndex = i);
+    },
+    destinations: const [
+    NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
+    NavigationDestination(icon: Icon(Icons.message_outlined), selectedIcon: Icon(Icons.message), label: 'Messages'),
+    NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
+    ],
+    ),
     );
   }
 
@@ -298,6 +320,9 @@ class _HomeScreenState extends State<HomeScreen> {
     required String subtitle,
     required VoidCallback onTap,
   }) {
+    final photoUrl = _user?.photoURL;
+    final String initial = initials.toUpperCase();
+
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(14),
@@ -313,14 +338,20 @@ class _HomeScreenState extends State<HomeScreen> {
               CircleAvatar(
                 radius: 22,
                 backgroundColor: Colors.indigo.shade100,
-                child: Text(
-                  initials,
+                backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
+                    ? NetworkImage(photoUrl)
+                    : null,
+                child: (photoUrl == null || photoUrl.isEmpty)
+                    ? Text(
+                  initial,
                   style: const TextStyle(
                     color: Colors.indigo,
                     fontWeight: FontWeight.bold,
                   ),
-                ),
+                )
+                    : null,
               ),
+
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -335,7 +366,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)),
+                        style: TextStyle(
+                            color: Colors.grey.shade600, fontSize: 12.5)),
                   ],
                 ),
               ),

@@ -39,6 +39,11 @@ dependencies:
   # Firebase Auth (will be used for login/signup)
   firebase_auth: ^6.0.0
 
+  # Firebase Storage (for profile photo uploads)
+  firebase_storage: ^13.0.0
+
+  # Image Picker (for selecting/taking profile photos)
+  image_picker: ^1.1.2
 
   # State management
   provider: ^6.1.2
