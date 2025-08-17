@@ -122,16 +122,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       body: StreamBuilder<List<ConversationPreview>>(
         stream: _chatService.getConversations(includeArchived: false),
         builder: (context, snapshot) {
-          // Add debug print
-          debugPrint('Stream update: ${snapshot.connectionState}');
-          if (snapshot.hasData) {
-            debugPrint('Conversations count: ${snapshot.data?.length}');
-            debugPrint('Current user ID: ${_chatService.currentUserId}');
-          }
-          if (snapshot.hasError) {
-            debugPrint('Stream error: ${snapshot.error}');
-          }
-
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }

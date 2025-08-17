@@ -8,8 +8,8 @@ class ChatBubble extends StatefulWidget {
   final DateTime timestamp;
   final VoidCallback? onDelete;
   final bool isDeleted;
-  final String? senderName;       // NEW: Sender's display name
-  final String? senderPhotoUrl;   // NEW: Sender's profile photo URL
+  final String? senderName;       // Sender's display name
+  final String? senderPhotoUrl;   // Sender's profile photo URL
 
   const ChatBubble({
     super.key,
@@ -18,8 +18,8 @@ class ChatBubble extends StatefulWidget {
     required this.timestamp,
     this.onDelete,
     this.isDeleted = false,
-    this.senderName,        // NEW
-    this.senderPhotoUrl,    // NEW
+    this.senderName,
+    this.senderPhotoUrl,
   });
 
   @override

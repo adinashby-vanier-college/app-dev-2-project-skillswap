@@ -48,7 +48,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _initializeUserData();
   }
 
-  // NEW: Initialize user data and then set loading to false
+  // Initialize user data and then set loading to false
   Future<void> _initializeUserData() async {
     // Load current user data
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
@@ -71,7 +71,7 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  // NEW: Load user data for a specific user ID
+  // Load user data for a specific user ID
   Future<Map<String, String?>> _loadUserData(String userId) async {
     // Return cached data if available
     if (_userCache.containsKey(userId)) {
