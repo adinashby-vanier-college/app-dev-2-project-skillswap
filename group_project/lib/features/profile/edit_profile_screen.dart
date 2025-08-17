@@ -88,29 +88,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _pickAvatar() async {
+    final theme = Theme.of(context);
     // return 'gallery' | 'camera' | 'remove'
     final choice = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
+      backgroundColor: theme.cardColor,
       builder: (ctx) {
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.photo_library_outlined),
-                title: const Text('Choose from gallery'),
+                leading: Icon(Icons.photo_library_outlined, color: theme.colorScheme.onSurface),
+                title: Text('Choose from gallery', style: TextStyle(color: theme.colorScheme.onSurface)),
                 onTap: () => Navigator.pop(ctx, 'gallery'),
               ),
               ListTile(
-                leading: const Icon(Icons.photo_camera_outlined),
-                title: const Text('Take a photo'),
+                leading: Icon(Icons.photo_camera_outlined, color: theme.colorScheme.onSurface),
+                title: Text('Take a photo', style: TextStyle(color: theme.colorScheme.onSurface)),
                 onTap: () => Navigator.pop(ctx, 'camera'),
               ),
               if (_avatarUrl != null || _avatarFile != null)
                 ListTile(
-                  leading: const Icon(Icons.delete_outline),
-                  title: const Text('Remove current photo'),
+                  leading: const Icon(Icons.delete_outline, color: Colors.red),
+                  title: const Text('Remove current photo', style: TextStyle(color: Colors.red)),
                   onTap: () => Navigator.pop(ctx, 'remove'),
                 ),
             ],
@@ -216,16 +218,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
 // Delete account method
   Future<void> _deleteAccount() async {
+    final theme = Theme.of(context);
     // Show confirmation dialog
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Account'),
-        content: const Text('Are you sure you want to permanently delete your account?'),
+        backgroundColor: theme.cardColor,
+        title: Text('Delete Account', style: TextStyle(color: theme.colorScheme.onSurface)),
+        content: Text('Are you sure you want to permanently delete your account?',
+            style: TextStyle(color: theme.colorScheme.onSurface)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text('Cancel', style: TextStyle(color: theme.colorScheme.onSurface)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -275,12 +280,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final _ = theme.colorScheme.primary;
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F7),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        title: Text('Edit Profile', style: TextStyle(color: colorScheme.onSurface)),
+        backgroundColor: theme.cardColor,
+        iconTheme: IconThemeData(color: colorScheme.onSurface),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => Navigator.pop(context),
@@ -347,9 +354,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             child: TextFormField(
                               controller: _nameCtrl,
                               textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                prefixIcon: Icon(Icons.person_outline),
+                              style: TextStyle(color: colorScheme.onSurface),
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(Icons.person_outline, color: colorScheme.onSurface.withAlpha(153)),
                                 hintText: 'Your full name',
+                                hintStyle: TextStyle(color: colorScheme.onSurface.withAlpha(128)),
                               ),
                               validator: (v) {
                                 final t = v?.trim() ?? '';
@@ -372,9 +381,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             child: TextFormField(
                               controller: _emailCtrl,
                               readOnly: true,
-                              decoration: const InputDecoration(
-                                prefixIcon: Icon(Icons.email_outlined),
+                              style: TextStyle(color: colorScheme.onSurface.withAlpha(153)),
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(Icons.email_outlined, color: colorScheme.onSurface.withAlpha(153)),
                                 hintText: 'Email',
+                                hintStyle: TextStyle(color: colorScheme.onSurface.withAlpha(128)),
                               ),
                             ),
                           ),
@@ -386,9 +397,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             child: TextFormField(
                               controller: _locationCtrl,
                               textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                prefixIcon: Icon(Icons.location_on_outlined),
+                              style: TextStyle(color: colorScheme.onSurface),
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(Icons.location_on_outlined, color: colorScheme.onSurface.withAlpha(153)),
                                 hintText: 'City, Country',
+                                hintStyle: TextStyle(color: colorScheme.onSurface.withAlpha(128)),
                               ),
                               maxLength: 80,
                               buildCounter: (
@@ -409,9 +422,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               controller: _bioCtrl,
                               textInputAction: TextInputAction.newline,
                               maxLines: 4,
-                              decoration: const InputDecoration(
-                                prefixIcon: Icon(Icons.info_outline),
+                              style: TextStyle(color: colorScheme.onSurface),
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(Icons.info_outline, color: colorScheme.onSurface.withAlpha(153)),
                                 hintText: 'Tell people about yourself',
+                                hintStyle: TextStyle(color: colorScheme.onSurface.withAlpha(128)),
                                 alignLabelWithHint: true,
                               ),
                               validator: (v) {
@@ -426,34 +441,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                           const Spacer(),
 
-                    // Save button
-                    SizedBox(
-                      height: 48,
-                      width: double.infinity, // full width
-                      child: FilledButton(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: CustomColors.primaryRed, // project red
-                          foregroundColor: Colors.white, // white text
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8), // rounded corners
+                          // Save button
+                          SizedBox(
+                            height: 48,
+                            width: double.infinity, // full width
+                            child: FilledButton(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: CustomColors.primaryRed, // project red
+                                foregroundColor: Colors.white, // white text
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8), // rounded corners
+                                ),
+                              ),
+                              onPressed: (_loading || !_dirty) ? null : _save,
+                              child: _loading
+                                  ? const SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.4,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                                  : const Text(
+                                'Save',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ),
                           ),
-                        ),
-                        onPressed: (_loading || !_dirty) ? null : _save,
-                        child: _loading
-                            ? const SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.4,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                            : const Text(
-                          'Save',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
                           // spacing between Save and Delete
                           const SizedBox(height: 12),
 
@@ -537,7 +552,7 @@ class _Avatar extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withAlpha((255 * 0.18).round()),
+            color: theme.colorScheme.primary.withAlpha(46),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -580,30 +595,32 @@ class _LabeledField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
             style: theme.textTheme.labelLarge
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                ?.copyWith(color: colorScheme.onSurface)),
         const SizedBox(height: 6),
         Theme(
           // Slightly rounded + filled fields for modern look
           data: theme.copyWith(
             inputDecorationTheme: theme.inputDecorationTheme.copyWith(
               filled: true,
-              fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+              fillColor: theme.cardColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.outline),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide:
-                BorderSide(color: theme.dividerColor.withAlpha(51)),
+                borderSide: BorderSide(color: colorScheme.outline),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: theme.colorScheme.primary),
+                borderSide: BorderSide(color: colorScheme.primary),
               ),
               contentPadding:
               const EdgeInsets.symmetric(horizontal: 14, vertical: 14),

@@ -1,5 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'providers/theme_provider.dart';
 import 'features/auth/sign_in_screen.dart';
 import 'features/auth/sign_up_screen.dart';
 import 'features/home/home_screen.dart';
@@ -17,20 +19,35 @@ class SkillSwapApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'SkillSwap',
-      theme: ThemeData(
-        primarySwatch: Colors.indigo,
+    return ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'SkillSwap',
+            themeMode: themeProvider.themeMode,
+            theme: ThemeData(
+              primarySwatch: Colors.indigo,
+              brightness: Brightness.light,
+              useMaterial3: true,
+            ),
+            darkTheme: ThemeData(
+              primarySwatch: Colors.indigo,
+              brightness: Brightness.dark,
+              useMaterial3: true,
+            ),
+            debugShowCheckedModeBanner: false,
+            home: const SignInScreen(),
+            routes: {
+              '/signIn': (context) => const SignInScreen(),
+              '/signUp': (context) => const SignUpScreen(),
+              '/home': (context) => const HomeScreen(),
+              '/conversations': (context) => const ConversationsScreen(),
+              '/archivedChats': (context) => const ArchivedChatsScreen(),
+            },
+          );
+        },
       ),
-      debugShowCheckedModeBanner: false,
-      home: const SignInScreen(),
-      routes: {
-        '/signIn': (context) => const SignInScreen(),
-        '/signUp': (context) => const SignUpScreen(),
-        '/home': (context) => const HomeScreen(),
-        '/conversations': (context) => const ConversationsScreen(),
-        '/archivedChats': (context) => const ArchivedChatsScreen(),
-      },
     );
   }
 }

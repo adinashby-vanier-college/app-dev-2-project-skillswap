@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:group_project/features/settings/settings_screen.dart';
 import '../profile/edit_profile_screen.dart';
 import '../matches/matches_screen.dart';
 
@@ -39,6 +40,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final name = _user?.displayName?.trim();
     final email = _user?.email ?? '';
 
@@ -48,11 +52,10 @@ class _HomeScreenState extends State<HomeScreen> {
         : (email.isNotEmpty ? email.characters.first : 'U'))
         .toUpperCase();
 
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.cardColor,
         elevation: 0.5,
         titleSpacing: 0,
         title: Row(
@@ -62,15 +65,15 @@ class _HomeScreenState extends State<HomeScreen> {
               width: 34,
               margin: const EdgeInsets.only(right: 12),
               decoration: BoxDecoration(
-                color: Colors.indigo.shade50,
+                color: colorScheme.primary.withAlpha(25),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Center(child: FlutterLogo(size: 20)),
             ),
-            const Text(
+            Text(
               'SkillSwap',
               style: TextStyle(
-                color: Colors.black87,
+                color: colorScheme.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -79,13 +82,12 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             tooltip: 'Notifications',
-            icon: const Icon(
-                Icons.notifications_outlined, color: Colors.black87),
+            icon: Icon(Icons.notifications_outlined, color: colorScheme.onSurface),
             onPressed: () {},
           ),
           IconButton(
             tooltip: 'Sign out',
-            icon: const Icon(Icons.logout, color: Colors.black87),
+            icon: Icon(Icons.logout, color: colorScheme.onSurface),
             onPressed: () async {
               final navigator = Navigator.of(context);
               await FirebaseAuth.instance.signOut();
@@ -95,180 +97,199 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: SafeArea(
-          child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: Colors.indigo.shade100,
-                      backgroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
-                      child: photo.isEmpty
-                          ? Text(
-                        initialTop,
-                        style: const TextStyle(
-                          color: Colors.indigo,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      )
-                          : null,
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: colorScheme.primary.withAlpha(50),
+                  backgroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
+                  child: photo.isEmpty
+                      ? Text(
+                    initialTop,
+                    style: TextStyle(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
                     ),
-                    const SizedBox(width: 12),
+                  )
+                      : null,
+                ),
+                const SizedBox(width: 12),
 
-                    Expanded(
-    child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-    Text(
-    'Welcome${name?.isNotEmpty == true ? ', $name' : ''} 👋',
-    maxLines: 1,
-    overflow: TextOverflow.ellipsis,
-    style: const TextStyle(
-    fontSize: 20,
-    fontWeight: FontWeight.w700,
-    ),
-    ),
-    Text(
-    email,
-    maxLines: 1,
-    overflow: TextOverflow.ellipsis,
-    style: TextStyle(
-    color: Colors.grey.shade600,
-    fontSize: 12.5,
-    ),
-    ),
-    ],
-    ),
-    ),
-    ],
-    ),
-    const SizedBox(height: 16),
-    TextField(
-    controller: _searchCtrl,
-    decoration: InputDecoration(
-    hintText: 'Search skills, people, topics…',
-    prefixIcon: const Icon(Icons.search),
-    filled: true,
-    fillColor: Colors.white,
-    contentPadding: const EdgeInsets.symmetric(vertical: 14),
-    border: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(14),
-    borderSide: BorderSide(color: Colors.grey.shade300),
-    ),
-    enabledBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(14),
-    borderSide: BorderSide(color: Colors.grey.shade300),
-    ),
-    focusedBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(14),
-    borderSide: const BorderSide(color: Colors.indigo),
-    ),
-    ),
-    onSubmitted: (q) {},
-    ),
-    const SizedBox(height: 18),
-    _sectionTitle('Quick actions'),
-    const SizedBox(height: 10),
-    GridView.count(
-    crossAxisCount: 2,
-    childAspectRatio: 1.1,
-    crossAxisSpacing: 14,
-    mainAxisSpacing: 14,
-    physics: const NeverScrollableScrollPhysics(),
-    shrinkWrap: true,
-    children: [
-    _featureCard(
-    icon: Icons.person_outline,
-    label: 'Edit Profile',
-    color: Colors.indigo,
-    onTap: _openEditProfile,
-    ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Welcome${name?.isNotEmpty == true ? ', $name' : ''} 👋',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      Text(
+                        email,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: colorScheme.onSurface.withAlpha(153),
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _searchCtrl,
+              decoration: InputDecoration(
+                hintText: 'Search skills, people, topics…',
+                hintStyle: TextStyle(color: colorScheme.onSurface.withAlpha(128)),
+                prefixIcon: Icon(Icons.search, color: colorScheme.onSurface.withAlpha(153)),
+                filled: true,
+                fillColor: theme.cardColor,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: colorScheme.outline),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: colorScheme.outline),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: colorScheme.primary),
+                ),
+              ),
+              style: TextStyle(color: colorScheme.onSurface),
+              onSubmitted: (q) {},
+            ),
+            const SizedBox(height: 18),
+            _sectionTitle('Quick actions', colorScheme),
+            const SizedBox(height: 10),
+            GridView.count(
+              crossAxisCount: 2,
+              childAspectRatio: 1.1,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              children: [
+                _featureCard(
+                  icon: Icons.person_outline,
+                  label: 'Edit Profile',
+                  color: Colors.indigo,
+                  onTap: _openEditProfile,
+                  theme: theme,
+                ),
 
-    _featureCard(
-    icon: Icons.school_outlined,
-    label: 'Edit Skills',
-    color: Colors.teal,
-    onTap: () {},
-    ),
+                _featureCard(
+                  icon: Icons.school_outlined,
+                  label: 'Edit Skills',
+                  color: Colors.teal,
+                  onTap: () {},
+                  theme: theme,
+                ),
 
-      _featureCard(
-        icon: Icons.people_outline,
-        label: 'Matches',
-        color: Colors.deepOrange,
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const MatchesScreen()),
-          );
-        },
+                _featureCard(
+                  icon: Icons.people_outline,
+                  label: 'Matches',
+                  color: Colors.deepOrange,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MatchesScreen()),
+                    );
+                  },
+                  theme: theme,
+                ),
+
+                _featureCard(
+                  icon: Icons.message_outlined,
+                  label: 'Messages',
+                  color: Colors.purple,
+                  onTap: _openMessages,
+                  theme: theme,
+                ),
+                _featureCard(
+                  icon: Icons.event_outlined,
+                  label: 'Sessions',
+                  color: Colors.blueGrey,
+                  onTap: () {},
+                  theme: theme,
+                ),
+                _featureCard(
+                  icon: Icons.settings_outlined,
+                  label: 'Settings',
+                  color: Colors.blue,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                    );},
+                  theme: theme,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            _sectionTitle('Recent matches', colorScheme),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 110,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: 10,
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
+                itemBuilder: (context, i) {
+                  return _matchChip(
+                    initials: 'U$i',
+                    title: 'User $i',
+                    subtitle: i.isEven ? 'Guitar' : 'Java',
+                    onTap: _openMessages,
+                    theme: theme,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
-
-      _featureCard(
-    icon: Icons.message_outlined,
-    label: 'Messages',
-    color: Colors.purple,
-    onTap: _openMessages,
-    ),
-    _featureCard(
-    icon: Icons.event_outlined,
-    label: 'Sessions',
-    color: Colors.blueGrey,
-    onTap: () {},
-    ),
-    _featureCard(
-    icon: Icons.settings_outlined,
-    label: 'Settings',
-    color: Colors.blue,
-    onTap: () {},
-    ),
-    ],
-    ),
-    const SizedBox(height: 20),
-    _sectionTitle('Recent matches'),
-    const SizedBox(height: 10),
-    SizedBox(
-    height: 110,
-    child: ListView.separated(
-    scrollDirection: Axis.horizontal,
-    itemCount: 10,
-    separatorBuilder: (_, _) => const SizedBox(width: 12),
-    itemBuilder: (context, i) {
-    return _matchChip(
-    initials: 'U$i',
-    title: 'User $i',
-    subtitle: i.isEven ? 'Guitar' : 'Java',
-    onTap: _openMessages,
-    );
-    },
-    ),
-    ),
-    ],
-    ),
-    ),
-    bottomNavigationBar: NavigationBar(
-    selectedIndex: _currentIndex,
-    onDestinationSelected: (i) {
-    if (i == 1) {
-    _openMessages();
-    return;
-    }
-    setState(() => _currentIndex = i);
-    },
-    destinations: const [
-    NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-    NavigationDestination(icon: Icon(Icons.message_outlined), selectedIcon: Icon(Icons.message), label: 'Messages'),
-    NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
-    ],
-    ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        backgroundColor: theme.cardColor,
+        onDestinationSelected: (i) {
+          if (i == 1) {
+            _openMessages();
+            return;
+          }
+          setState(() => _currentIndex = i);
+        },
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
+          NavigationDestination(icon: Icon(Icons.message_outlined), selectedIcon: Icon(Icons.message), label: 'Messages'),
+          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
     );
   }
 
-  Widget _sectionTitle(String text) {
+  Widget _sectionTitle(String text, ColorScheme colorScheme) {
     return Text(
       text,
-      style: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w700),
+      style: TextStyle(
+        fontSize: 16.5,
+        fontWeight: FontWeight.w700,
+        color: colorScheme.onSurface,
+      ),
     );
   }
 
@@ -277,22 +298,23 @@ class _HomeScreenState extends State<HomeScreen> {
     required String label,
     required Color color,
     required VoidCallback onTap,
+    required ThemeData theme,
   }) {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: onTap,
       child: Ink(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(10),
+              color: theme.shadowColor.withAlpha(10),
               blurRadius: 14,
               offset: const Offset(0, 6),
             ),
           ],
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: theme.colorScheme.outline.withAlpha(51)),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -313,7 +335,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 label,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurface,
+                ),
               ),
             ],
           ),
@@ -327,14 +352,16 @@ class _HomeScreenState extends State<HomeScreen> {
     required String title,
     required String subtitle,
     required VoidCallback onTap,
+    required ThemeData theme,
   }) {
     final photoUrl = _user?.photoURL;
     final String initial = initials.toUpperCase();
 
     return Material(
-      color: Colors.white,
+      color: theme.cardColor,
       borderRadius: BorderRadius.circular(14),
       elevation: 1,
+      shadowColor: theme.shadowColor.withAlpha(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
@@ -345,15 +372,15 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor: Colors.indigo.shade100,
+                backgroundColor: theme.colorScheme.primary.withAlpha(50),
                 backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
                     ? NetworkImage(photoUrl)
                     : null,
                 child: (photoUrl == null || photoUrl.isEmpty)
                     ? Text(
                   initial,
-                  style: const TextStyle(
-                    color: Colors.indigo,
+                  style: TextStyle(
+                    color: theme.colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 )
@@ -369,18 +396,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w700)),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.onSurface,
+                        )),
                     const SizedBox(height: 2),
                     Text(subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                            color: Colors.grey.shade600, fontSize: 12.5)),
+                            color: theme.colorScheme.onSurface.withAlpha(153),
+                            fontSize: 12.5)),
                   ],
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.chat_bubble_outline),
+                icon: Icon(
+                  Icons.chat_bubble_outline,
+                  color: theme.colorScheme.onSurface.withAlpha(153),
+                ),
                 onPressed: onTap,
                 tooltip: 'Message',
               ),
