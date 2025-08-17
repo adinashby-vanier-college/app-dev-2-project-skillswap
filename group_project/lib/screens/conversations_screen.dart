@@ -4,13 +4,11 @@ import '../models/conversation_preview.dart';
 import '../services/chat_service.dart';
 import 'chat_screen.dart';
 
-// Mock user names for your mock user IDs
 const Map<String, String> mockUserNames = {
   'user1': 'You',
   'user2': 'Bob',
   'user3': 'Charlie',
   'user4': 'Dave',
-  // Add other mock users here
 };
 
 class ConversationsScreen extends StatefulWidget {
@@ -31,11 +29,13 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
         content: Text(message),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Confirm')),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Confirm'),
+          ),
         ],
       ),
     );
@@ -46,35 +46,41 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       'Delete Conversation',
       'Are you sure you want to delete this conversation?',
     );
-    if (confirm != true) return;
+    if (confirm != true || !mounted) return;
 
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
       await _chatService.deleteConversation(convoId);
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+      scaffoldMessenger.showSnackBar(
         const SnackBar(content: Text('Conversation deleted')),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+      scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('Failed to delete conversation: $e')),
       );
     }
   }
 
   Future<void> _archiveConversation(String convoId) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
       await _chatService.archiveConversation(convoId);
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+      scaffoldMessenger.showSnackBar(
         const SnackBar(content: Text('Conversation archived')),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+      scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('Failed to archive conversation: $e')),
       );
     }
   }
 
   void _startNewConversation() {
-    // TODO: Implement start new conversation UI/logic
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Start new conversation tapped')),
     );
@@ -90,6 +96,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
             icon: const Icon(Icons.archive),
             tooltip: 'View Archived Chats',
             onPressed: () {
+              if (!mounted) return;
               Navigator.pushNamed(context, '/archivedChats');
             },
           ),
@@ -97,13 +104,16 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
             icon: const Icon(Icons.bug_report),
             tooltip: 'Add Mock Conversation',
             onPressed: () async {
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
               try {
                 await _createMockConversation();
-                ScaffoldMessenger.of(context).showSnackBar(
+                if (!mounted) return;
+                scaffoldMessenger.showSnackBar(
                   const SnackBar(content: Text('Mock conversation created')),
                 );
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                if (!mounted) return;
+                scaffoldMessenger.showSnackBar(
                   SnackBar(content: Text('Failed to create mock: $e')),
                 );
               }
@@ -135,13 +145,12 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
             separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final convo = conversations[index];
-
               final chatPartnerId = convo.participants.firstWhere(
                     (id) => id != _chatService.currentUserId,
                 orElse: () => 'Unknown',
               );
-
-              final chatPartnerName = mockUserNames[chatPartnerId] ?? chatPartnerId;
+              final chatPartnerName =
+                  mockUserNames[chatPartnerId] ?? chatPartnerId;
 
               return Dismissible(
                 key: Key(convo.id),
@@ -175,35 +184,38 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                     children: [
                       Text(
                         _formatTimestamp(convo.lastMessageTime),
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style:
+                        const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       if (convo.unreadCount > 0)
                         Container(
                           margin: const EdgeInsets.only(top: 4),
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: Colors.red,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             '${convo.unreadCount}',
-                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 12),
                           ),
                         ),
                     ],
                   ),
                   onTap: () {
+                    if (!mounted) return;
                     final convoId = generateConversationId(
                       _chatService.currentUserId,
                       chatPartnerId,
                     );
-
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => ChatScreen(
                           conversationId: convoId,
-                          isArchived: false,  // Active chat
+                          isArchived: false,
                         ),
                       ),
                     );
@@ -233,7 +245,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
 
   Future<void> _createMockConversation() async {
     final firestore = FirebaseFirestore.instance;
-    const currentUserId = 'user1'; // Your mock current user ID
+    const currentUserId = 'user1';
     const chatPartnerId = 'user2';
 
     final ids = [currentUserId, chatPartnerId]..sort();
@@ -241,7 +253,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
 
     final convoRef = firestore.collection('conversations').doc(convoId);
     final messagesRef = convoRef.collection('messages');
-
     final now = DateTime.now();
 
     await convoRef.set({

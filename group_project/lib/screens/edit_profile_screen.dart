@@ -207,19 +207,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void _showSnack(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg)),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+    }
   }
-  // Delete account method
+
+// Delete account method
   Future<void> _deleteAccount() async {
+    // Show confirmation dialog
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Account'),
-        content: const Text(
-          'Are you sure you want to permanently delete your account? ',
-        ),
+        content: const Text('Are you sure you want to permanently delete your account?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -227,16 +229,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
 
+    // Bail early if canceled
     if (confirm != true) return;
+
+    if (!mounted) return;
+    final navigator = Navigator.of(context);
 
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -245,24 +248,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         return;
       }
 
-      // Delete Firestore document
+      // Delete Firestore doc
       await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
 
       // Delete Auth account
       await user.delete();
 
       if (!mounted) return;
-
-// Show success message
       _showSnack('Account deleted successfully');
 
-// Sign out to clear current user
       await FirebaseAuth.instance.signOut();
 
-// Go to login screen and clear all previous routes
-      Navigator.of(context).pushNamedAndRemoveUntil('/signIn', (route) => false);
+      // Safe to use navigator here
+      navigator.pushNamedAndRemoveUntil('/signIn', (route) => false);
 
     } catch (e) {
+      if (!mounted) return;
       if (e is FirebaseAuthException && e.code == 'requires-recent-login') {
         _showSnack('Please log in again to delete your account.');
       } else {
@@ -274,7 +275,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
+    final _ = theme.colorScheme.primary;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7F7),
@@ -521,7 +522,7 @@ class _Avatar extends StatelessWidget {
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _initials(context),
+          errorBuilder: (_, _, _) => _initials(context),
         ),
       );
     } else {
@@ -536,7 +537,7 @@ class _Avatar extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.18),
+            color: theme.colorScheme.primary.withAlpha((255 * 0.18).round()),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -598,7 +599,7 @@ class _LabeledField extends StatelessWidget {
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide:
-                BorderSide(color: theme.dividerColor.withOpacity(0.2)),
+                BorderSide(color: theme.dividerColor.withAlpha(51)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),

@@ -60,25 +60,26 @@ class _SignInScreenState extends State<SignInScreen> {
               CustomButton(
                 text: "Sign in",
                 onPressed: () async {
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                  final navigator = Navigator.of(context);
                   try {
                     await _authService.signInWithEmail(
                       _emailController.text.trim(),
                       _passwordController.text.trim(),
                     );
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    scaffoldMessenger.showSnackBar(
                       const SnackBar(content: Text("Signed in successfully")),
                     );
 
-                    Navigator.pushReplacementNamed(context, '/home');
+                    navigator.pushReplacementNamed('/home');
 
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    scaffoldMessenger.showSnackBar(
                       SnackBar(content: Text(e.toString())),
                     );
                   }
                 },
               ),
-
               const SizedBox(height: 16),
               const Text("or use one of your social profiles"),
               const SizedBox(height: 16),

@@ -87,9 +87,9 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip: 'Sign out',
             icon: const Icon(Icons.logout, color: Colors.black87),
             onPressed: () async {
+              final navigator = Navigator.of(context);
               await FirebaseAuth.instance.signOut();
-              if (!mounted) return;
-              Navigator.of(context).pushReplacementNamed('/');
+              navigator.pushReplacementNamed('/');
             },
           ),
         ],
@@ -233,7 +233,7 @@ class _HomeScreenState extends State<HomeScreen> {
     child: ListView.separated(
     scrollDirection: Axis.horizontal,
     itemCount: 10,
-    separatorBuilder: (_, __) => const SizedBox(width: 12),
+    separatorBuilder: (_, _) => const SizedBox(width: 12),
     itemBuilder: (context, i) {
     return _matchChip(
     initials: 'U$i',
@@ -287,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withAlpha(10),
               blurRadius: 14,
               offset: const Offset(0, 6),
             ),
@@ -303,7 +303,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 44,
                 width: 44,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(.12),
+                  color: color.withAlpha(31),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 26),

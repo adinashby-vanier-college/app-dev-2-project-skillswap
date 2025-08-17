@@ -174,26 +174,31 @@ class _ChatScreenState extends State<ChatScreen> {
                 });
 
                 return ListView.builder(
-                  controller: _scrollController,
-                  itemCount: messages.length,
+                  controller: _scrollController,      // Handles scrolling programmatically
+                  itemCount: messages.length,         // Number of chat messages
                   itemBuilder: (ctx, index) {
-                    final msg = messages[index];
-                    final isMe = msg.senderId == mockCurrentUserId;
+                    final msg = messages[index];      // Get current message
+                    final isMe = msg.senderId == mockCurrentUserId; // Check if I sent it
+
                     return ChatBubble(
-                      key: ValueKey(msg.id),
-                      message: msg.text,
-                      isMe: isMe,
-                      timestamp: msg.timestamp,
-                      onDelete: () async {
+                      key: ValueKey(msg.id),          // Unique key for efficient rebuilds
+                      message: msg.text,              // Message text
+                      isMe: isMe,                     // Styles bubble as mine or theirs
+                      timestamp: msg.timestamp,       // When the message was sent
+                      onDelete: () async {            // Delete message handler
                         try {
                           await _chatService.deleteMessage(widget.conversationId, msg.id);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Message deleted')),
-                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Message deleted')),
+                            );
+                          }
                         } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed to delete message: $e')),
-                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed to delete message: $e')),
+                            );
+                          }
                         }
                       },
                     );
