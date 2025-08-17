@@ -1,15 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../models/conversation_preview.dart';
 import '../services/chat_service.dart';
 import 'chat_screen.dart';
-
-const Map<String, String> mockUserNames = {
-  'user1': 'You',
-  'user2': 'Bob',
-  'user3': 'Charlie',
-  'user4': 'Dave',
-};
+import '../widgets/profile_avatar.dart';
 
 class ConversationsScreen extends StatefulWidget {
   const ConversationsScreen({super.key});
@@ -21,23 +14,30 @@ class ConversationsScreen extends StatefulWidget {
 class _ConversationsScreenState extends State<ConversationsScreen> {
   final ChatService _chatService = ChatService();
 
+  @override
+  void initState() {
+    super.initState();
+  }
+
   Future<bool?> _showConfirmationDialog(String title, String message) {
     return showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
+      builder: (context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -48,32 +48,30 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     );
     if (confirm != true || !mounted) return;
 
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
       await _chatService.deleteConversation(convoId);
       if (!mounted) return;
-      scaffoldMessenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Conversation deleted')),
       );
     } catch (e) {
       if (!mounted) return;
-      scaffoldMessenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to delete conversation: $e')),
       );
     }
   }
 
   Future<void> _archiveConversation(String convoId) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
       await _chatService.archiveConversation(convoId);
       if (!mounted) return;
-      scaffoldMessenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Conversation archived')),
       );
     } catch (e) {
       if (!mounted) return;
-      scaffoldMessenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to archive conversation: $e')),
       );
     }
@@ -102,19 +100,19 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.bug_report),
-            tooltip: 'Add Mock Conversation',
+            tooltip: 'Add/Restore Mock Conversations',
             onPressed: () async {
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final messenger = ScaffoldMessenger.of(context);
               try {
-                await _createMockConversation();
+                await _chatService.createAllMockConversations();
                 if (!mounted) return;
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(content: Text('Mock conversation created')),
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('Created/restored all mock conversations')),
                 );
               } catch (e) {
                 if (!mounted) return;
-                scaffoldMessenger.showSnackBar(
-                  SnackBar(content: Text('Failed to create mock: $e')),
+                messenger.showSnackBar(
+                  SnackBar(content: Text('Failed to create mock conversations: $e')),
                 );
               }
             },
@@ -124,6 +122,16 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       body: StreamBuilder<List<ConversationPreview>>(
         stream: _chatService.getConversations(includeArchived: false),
         builder: (context, snapshot) {
+          // Add debug print
+          debugPrint('Stream update: ${snapshot.connectionState}');
+          if (snapshot.hasData) {
+            debugPrint('Conversations count: ${snapshot.data?.length}');
+            debugPrint('Current user ID: ${_chatService.currentUserId}');
+          }
+          if (snapshot.hasError) {
+            debugPrint('Stream error: ${snapshot.error}');
+          }
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -149,8 +157,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                     (id) => id != _chatService.currentUserId,
                 orElse: () => 'Unknown',
               );
-              final chatPartnerName =
-                  mockUserNames[chatPartnerId] ?? chatPartnerId;
 
               return Dismissible(
                 key: Key(convo.id),
@@ -177,44 +183,53 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                   return false;
                 },
                 child: ListTile(
-                  title: Text('Chat with $chatPartnerName'),
-                  subtitle: Text(convo.lastMessage),
+                  leading: ProfileAvatar(
+                    displayName: chatPartnerId,
+                    // imageUrl: null, // If you have a photo URL, pass it here
+                  ),
+                  title: Text('Chat with $chatPartnerId'),
+                  subtitle: Text(
+                    (convo.status == 'deleted' || convo.lastMessage.isEmpty)
+                        ? 'message was deleted'
+                        : convo.lastMessage,
+                    style: TextStyle(
+                      fontStyle: (convo.status == 'deleted' || convo.lastMessage == 'message was deleted' || convo.lastMessage.isEmpty)
+                          ? FontStyle.italic
+                          : FontStyle.normal,
+                      color: (convo.status == 'deleted' || convo.lastMessage == 'message was deleted' || convo.lastMessage.isEmpty)
+                          ? Colors.grey[600]
+                          : null,
+                    ),
+                  ),
                   trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         _formatTimestamp(convo.lastMessageTime),
-                        style:
-                        const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       if (convo.unreadCount > 0)
                         Container(
                           margin: const EdgeInsets.only(top: 4),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: Colors.red,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             '${convo.unreadCount}',
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 12),
+                            style: const TextStyle(color: Colors.white, fontSize: 12),
                           ),
                         ),
                     ],
                   ),
                   onTap: () {
                     if (!mounted) return;
-                    final convoId = generateConversationId(
-                      _chatService.currentUserId,
-                      chatPartnerId,
-                    );
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => ChatScreen(
-                          conversationId: convoId,
+                          conversationId: convo.id,
                           isArchived: false,
                         ),
                       ),
@@ -241,54 +256,5 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     } else {
       return '${dt.month}/${dt.day}/${dt.year}';
     }
-  }
-
-  Future<void> _createMockConversation() async {
-    final firestore = FirebaseFirestore.instance;
-    const currentUserId = 'user1';
-    const chatPartnerId = 'user2';
-
-    final ids = [currentUserId, chatPartnerId]..sort();
-    final convoId = ids.join('_');
-
-    final convoRef = firestore.collection('conversations').doc(convoId);
-    final messagesRef = convoRef.collection('messages');
-    final now = DateTime.now();
-
-    await convoRef.set({
-      'participants': [currentUserId, chatPartnerId],
-      'lastMessage': 'Great talking with you!',
-      'lastMessageTime': now,
-      'unreadCounts': {
-        chatPartnerId: 1,
-        currentUserId: 0,
-      },
-      'status': {
-        currentUserId: 'active',
-        chatPartnerId: 'active',
-      },
-      'archived': false,
-    });
-
-    await messagesRef.add({
-      'senderId': currentUserId,
-      'receiverId': chatPartnerId,
-      'text': 'Hey, this is a mock message from you!',
-      'timestamp': now.subtract(const Duration(minutes: 2)),
-      'isRead': true,
-    });
-
-    await messagesRef.add({
-      'senderId': chatPartnerId,
-      'receiverId': currentUserId,
-      'text': 'Hi! Thanks for the message :)',
-      'timestamp': now.subtract(const Duration(minutes: 1)),
-      'isRead': false,
-    });
-  }
-
-  String generateConversationId(String uid1, String uid2) {
-    final ids = [uid1, uid2]..sort();
-    return ids.join('_');
   }
 }

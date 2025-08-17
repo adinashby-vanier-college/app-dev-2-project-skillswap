@@ -2,15 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/conversation_preview.dart';
 import '../services/chat_service.dart';
 import 'chat_screen.dart';
-
-// Reuse mockUserNames map from ConversationsScreen
-const Map<String, String> mockUserNames = {
-  'user1': 'You',
-  'user2': 'Bob',
-  'user3': 'Charlie',
-  'user4': 'Dave',
-  // Add other mock users here
-};
+import '../widgets/profile_avatar.dart';
 
 class ArchivedChatsScreen extends StatefulWidget {
   const ArchivedChatsScreen({super.key});
@@ -34,6 +26,23 @@ class _ArchivedChatsScreenState extends State<ArchivedChatsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to unarchive conversation: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteConversation(String convoId) async {
+    try {
+      await _chatService.deleteConversation(convoId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Conversation deleted')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete conversation: $e')),
         );
       }
     }
@@ -73,27 +82,54 @@ class _ArchivedChatsScreenState extends State<ArchivedChatsScreen> {
                       (id) => id != _chatService.currentUserId,
                   orElse: () => 'Unknown');
 
-              final chatPartnerName =
-                  mockUserNames[chatPartnerId] ?? chatPartnerId;
-
-              return ListTile(
-                title: Text('Chat with $chatPartnerName'),
-                subtitle: Text(convo.lastMessage),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ChatScreen(
-                        conversationId: convo.id,
-                        isArchived: true,  // Archived chat
-                      ),
-                    ),
-                  );
+              return Dismissible(
+                key: Key(convo.id),
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.only(left: 20),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                direction: DismissDirection.startToEnd,
+                confirmDismiss: (direction) async {
+                  await _deleteConversation(convo.id);
+                  return false;
                 },
-                trailing: IconButton(
-                  icon: const Icon(Icons.unarchive),
-                  tooltip: 'Unarchive',
-                  onPressed: () => _unarchiveConversation(convo.id),
+                child: ListTile(
+                  leading: ProfileAvatar(
+                    displayName: chatPartnerId,
+                    // imageUrl: null, // If you have a photo URL, pass it here
+                  ),
+                  title: Text('Chat with $chatPartnerId'),
+                  subtitle: Text(
+                    (convo.lastMessage == 'message was deleted' || convo.lastMessage.isEmpty)
+                        ? 'message was deleted'
+                        : convo.lastMessage,
+                    style: TextStyle(
+                      fontStyle: (convo.lastMessage == 'message was deleted' || convo.lastMessage.isEmpty)
+                          ? FontStyle.italic
+                          : FontStyle.normal,
+                      color: (convo.lastMessage == 'message was deleted' || convo.lastMessage.isEmpty)
+                          ? Colors.grey[600]
+                          : null,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatScreen(
+                          conversationId: convo.id,
+                          isArchived: true,  // Archived chat
+                        ),
+                      ),
+                    );
+                  },
+                  trailing: IconButton(
+                    icon: const Icon(Icons.unarchive),
+                    tooltip: 'Unarchive',
+                    onPressed: () => _unarchiveConversation(convo.id),
+                  ),
                 ),
               );
             },

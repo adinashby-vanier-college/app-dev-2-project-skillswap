@@ -8,6 +8,7 @@ class Message {
   final DateTime timestamp;    // When the message was sent
   final bool isRead;           // Has the receiver read this message?
   final String conversationId; // ID of the conversation this message belongs to (not stored in Firestore)
+  final bool isDeleted;        // Is the message deleted?
 
   Message({
     required this.id,
@@ -17,6 +18,7 @@ class Message {
     required this.timestamp,
     required this.isRead,
     required this.conversationId,
+    this.isDeleted = false,
   });
 
   factory Message.fromMap(Map<String, dynamic> data, String documentId, String convoId) {
@@ -28,6 +30,7 @@ class Message {
       timestamp: (data['timestamp'] as Timestamp).toDate(),
       isRead: data['isRead'] ?? false,
       conversationId: convoId,
+      isDeleted: data['isDeleted'] ?? false,
     );
   }
 
@@ -38,6 +41,7 @@ class Message {
       'text': text,
       'timestamp': timestamp,
       'isRead': isRead,
+      'isDeleted': isDeleted,
     };
   }
 }

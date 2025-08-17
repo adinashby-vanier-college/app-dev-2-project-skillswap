@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/chat_bubble.dart';
 import '../utils/loading_spinner.dart';
-import '../mock/mock_user.dart';
 import '../models/message.dart';
 import '../services/chat_service.dart';
 
@@ -27,6 +28,9 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isLoading = true;
   bool _canSend = false;
 
+  // Cache for user data
+  final Map<String, Map<String, String?>> _userCache = {};
+
   @override
   void initState() {
     super.initState();
@@ -38,13 +42,26 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     });
 
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    });
-
     _chatService.markMessagesRead(widget.conversationId);
+
+    // Load current user data first, then set loading to false
+    _initializeUserData();
+  }
+
+  // NEW: Initialize user data and then set loading to false
+  Future<void> _initializeUserData() async {
+    // Load current user data
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId != null) {
+      await _loadUserData(currentUserId);
+    }
+
+    // Add a small delay to ensure everything is loaded
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -52,6 +69,63 @@ class _ChatScreenState extends State<ChatScreen> {
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  // NEW: Load user data for a specific user ID
+  Future<Map<String, String?>> _loadUserData(String userId) async {
+    // Return cached data if available
+    if (_userCache.containsKey(userId)) {
+      return _userCache[userId]!;
+    }
+
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      final userData = userDoc.data();
+
+      // For current user, also try Firebase Auth as fallback
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final isCurrentUser = currentUser?.uid == userId;
+
+      String name = 'User';
+      String? photoUrl;
+
+      if (userData?['name'] != null) {
+        name = userData!['name'].toString();
+      } else if (isCurrentUser && currentUser != null) {
+        // Fallback to Firebase Auth data for current user
+        name = currentUser.displayName ??
+            currentUser.email?.split('@')[0] ??
+            'You';
+      }
+
+      if (userData?['photoUrl'] != null) {
+        photoUrl = userData!['photoUrl'].toString();
+      } else if (isCurrentUser && currentUser != null) {
+        photoUrl = currentUser.photoURL;
+      }
+
+      final result = <String, String?>{
+        'name': name,
+        'photoUrl': photoUrl,
+      };
+
+      _userCache[userId] = result;
+
+      if (isCurrentUser) {
+        debugPrint('Loaded current user data: name=${result['name']}, photoUrl=${result['photoUrl']}');
+      }
+
+      return result;
+    } catch (e) {
+      debugPrint('Failed to load user data for $userId: $e');
+      final fallback = <String, String?>{'name': 'User', 'photoUrl': null};
+      _userCache[userId] = fallback;
+      return fallback;
+    }
   }
 
   void _sendMessage() async {
@@ -119,6 +193,10 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _deleteMessage(String messageId) async {
+    await _chatService.deleteMessage(widget.conversationId, messageId);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isArchived = widget.isArchived;
@@ -144,68 +222,58 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const LoadingSpinner()
-          : Column(
+      body: Column(
         children: [
           Expanded(
-            child: StreamBuilder<List<Message>>(
-              stream: _chatService.getMessages(widget.conversationId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const LoadingSpinner();
-                }
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      'Error loading messages: ${snapshot.error}',
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  );
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No messages yet.'));
-                }
+            child: _isLoading
+                ? const LoadingSpinner()
+                : StreamBuilder<List<Message>>(
+                    stream: _chatService.getMessages(widget.conversationId),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Text('Error loading messages: ${snapshot.error}'),
+                        );
+                      }
 
-                final messages = snapshot.data!;
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _scrollToBottom();
-                });
+                      final messages = snapshot.data!;
+                      if (messages.isEmpty) {
+                        return const Center(child: Text('No messages yet'));
+                      }
 
-                return ListView.builder(
-                  controller: _scrollController,      // Handles scrolling programmatically
-                  itemCount: messages.length,         // Number of chat messages
-                  itemBuilder: (ctx, index) {
-                    final msg = messages[index];      // Get current message
-                    final isMe = msg.senderId == mockCurrentUserId; // Check if I sent it
+                      // Messages are already in reverse chronological order from the stream
+                      return ListView.builder(
+                        controller: _scrollController,
+                        reverse: true,  // Add this to show messages from bottom to top
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          final message = messages[index];
+                          final isMe = message.senderId == _chatService.currentUserId;
 
-                    return ChatBubble(
-                      key: ValueKey(msg.id),          // Unique key for efficient rebuilds
-                      message: msg.text,              // Message text
-                      isMe: isMe,                     // Styles bubble as mine or theirs
-                      timestamp: msg.timestamp,       // When the message was sent
-                      onDelete: () async {            // Delete message handler
-                        try {
-                          await _chatService.deleteMessage(widget.conversationId, msg.id);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Message deleted')),
-                            );
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Failed to delete message: $e')),
-                            );
-                          }
-                        }
-                      },
-                    );
-                  },
-                );
-              },
-            ),
+                          return FutureBuilder<Map<String, String?>>(
+                            future: _loadUserData(message.senderId),
+                            builder: (context, userSnapshot) {
+                              final userData = userSnapshot.data;
+                              return ChatBubble(
+                                message: message.text,
+                                isMe: isMe,
+                                timestamp: message.timestamp,
+                                onDelete: isMe ? () => _deleteMessage(message.id) : null,
+                                isDeleted: message.isDeleted,
+                                senderName: (userData?['name'] == 'User') ? message.senderId : userData?['name'],
+                                senderPhotoUrl: userData?['photoUrl'],
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
           ),
           const Divider(height: 1),
           Padding(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'profile_avatar.dart';
 
 class ChatBubble extends StatefulWidget {
   final String message;
@@ -7,6 +8,8 @@ class ChatBubble extends StatefulWidget {
   final DateTime timestamp;
   final VoidCallback? onDelete;
   final bool isDeleted;
+  final String? senderName;       // NEW: Sender's display name
+  final String? senderPhotoUrl;   // NEW: Sender's profile photo URL
 
   const ChatBubble({
     super.key,
@@ -15,6 +18,8 @@ class ChatBubble extends StatefulWidget {
     required this.timestamp,
     this.onDelete,
     this.isDeleted = false,
+    this.senderName,        // NEW
+    this.senderPhotoUrl,    // NEW
   });
 
   @override
@@ -48,7 +53,6 @@ class _ChatBubbleState extends State<ChatBubble> {
     Widget bubbleContent = Container(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12).copyWith(right: 40),
-      // Add right padding for delete button space
       constraints: BoxConstraints(
         maxWidth: MediaQuery.of(context).size.width * 0.7,
       ),
@@ -127,41 +131,72 @@ class _ChatBubbleState extends State<ChatBubble> {
       ),
     );
 
-    return Align(
-      alignment: widget.isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          onLongPress: _showDeleteIcon,
-          onTap: () {
-            if (_showDelete) _hideDeleteIcon();
-          },
-          onSecondaryTapDown: (details) {
-            // Show right-click menu on desktop/web
-            final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    // Build the complete message row with avatar
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Avatar for other users (left side)
+          if (!widget.isMe) ...[
+            ProfileAvatar(
+              size: 32.0,
+              imageUrl: widget.senderPhotoUrl,
+              displayName: widget.senderName,
+            ),
+            const SizedBox(width: 8.0),
+          ],
 
-            showMenu(
-              context: context,
-              position: RelativeRect.fromRect(
-                details.globalPosition & const Size(40, 40),
-                Offset.zero & overlay.size,
-              ),
-              items: [
-                PopupMenuItem(
-                  onTap: _onDelete,
-                  child: const Text('Delete'),
+          // Message bubble (flexible to take remaining space)
+          Flexible(
+            child: Align(
+              alignment: widget.isMe ? Alignment.centerRight : Alignment.centerLeft,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onLongPress: _showDeleteIcon,
+                  onTap: () {
+                    if (_showDelete) _hideDeleteIcon();
+                  },
+                  onSecondaryTapDown: (details) {
+                    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+
+                    showMenu(
+                      context: context,
+                      position: RelativeRect.fromRect(
+                        details.globalPosition & const Size(40, 40),
+                        Offset.zero & overlay.size,
+                      ),
+                      items: [
+                        PopupMenuItem(
+                          onTap: _onDelete,
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    );
+                  },
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      bubbleContent,
+                      if (_showDelete && !widget.isDeleted) deleteButton,
+                    ],
+                  ),
                 ),
-              ],
-            );
-          },
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              bubbleContent,
-              if (_showDelete && !widget.isDeleted) deleteButton,
-            ],
+              ),
+            ),
           ),
-        ),
+
+          // Avatar for current user (right side)
+          if (widget.isMe) ...[
+            const SizedBox(width: 8.0),
+            ProfileAvatar(
+              size: 32.0,
+              imageUrl: widget.senderPhotoUrl,
+              displayName: widget.senderName,
+            ),
+          ],
+        ],
       ),
     );
   }
