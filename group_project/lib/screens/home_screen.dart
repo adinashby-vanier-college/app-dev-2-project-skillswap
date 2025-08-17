@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'edit_profile_screen.dart';
+import 'matches_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -191,13 +192,20 @@ class _HomeScreenState extends State<HomeScreen> {
     color: Colors.teal,
     onTap: () {},
     ),
-    _featureCard(
-    icon: Icons.people_outline,
-    label: 'Matches',
-    color: Colors.deepOrange,
-    onTap: () {},
-    ),
-    _featureCard(
+
+      _featureCard(
+        icon: Icons.people_outline,
+        label: 'Matches',
+        color: Colors.deepOrange,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MatchesScreen()),
+          );
+        },
+      ),
+
+      _featureCard(
     icon: Icons.message_outlined,
     label: 'Messages',
     color: Colors.purple,
