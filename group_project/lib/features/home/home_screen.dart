@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:group_project/features/settings/settings_screen.dart';
 import '../profile/edit_profile_screen.dart';
+import '../profile/edit_skills_screen.dart';
 import '../matches/matches_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -196,9 +197,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icons.school_outlined,
                   label: 'Edit Skills',
                   color: Colors.teal,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const EditSkillsScreen()),
+                    );
+                  },
                   theme: theme,
                 ),
+
 
                 _featureCard(
                   icon: Icons.people_outline,
