@@ -14,6 +14,32 @@ class _EditSkillsScreenState extends State<EditSkillsScreen> {
   final TextEditingController _skillsWantController = TextEditingController();
   final User? user = FirebaseAuth.instance.currentUser;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadSkills();
+  }
+
+  Future<void> _loadSkills() async {
+    if (user == null) return;
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data() ?? {};
+        setState(() {
+          _skillsHaveController.text = data['skillsHave'] ?? '';
+          _skillsWantController.text = data['skillsWant'] ?? '';
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading skills: $e");
+    }
+  }
+
   Future<void> _saveSkills() async {
     if (user == null) return;
     try {
@@ -130,7 +156,9 @@ class _EditSkillsScreenState extends State<EditSkillsScreen> {
                   ),
                   child: const Text(
                     "Save",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
