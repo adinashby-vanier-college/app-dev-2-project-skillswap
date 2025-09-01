@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../chat/chat_screen.dart';
 
 class ViewProfileScreen extends StatelessWidget {
   final String userId;
@@ -10,6 +12,12 @@ class ViewProfileScreen extends StatelessWidget {
     final doc =
     await FirebaseFirestore.instance.collection('users').doc(userId).get();
     return doc.data();
+  }
+
+  // helper to generate stable conversation id
+  String generateConversationId(String uid1, String uid2) {
+    final sorted = [uid1, uid2]..sort();
+    return "${sorted[0]}_${sorted[1]}";
   }
 
   @override
@@ -50,6 +58,28 @@ class ViewProfileScreen extends StatelessWidget {
                 Text("Skills Want: ${userData["skillsWant"] ?? "None"}"),
                 const SizedBox(height: 20),
                 Text("Bio: ${userData["bio"] ?? "No bio"}"),
+                const Spacer(),
+
+                // Only Start Chat button remains
+                ElevatedButton(
+                  onPressed: () {
+                    final myUid = FirebaseAuth.instance.currentUser!.uid;
+                    final convoId = generateConversationId(myUid, userId);
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatScreen(conversationId: convoId),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                  child: const Text("Start Chat"),
+                ),
               ],
             ),
           );
