@@ -1,0 +1,108 @@
+import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../profile/view_profile_screen.dart';
+
+class MapScreen extends StatefulWidget {
+  const MapScreen({super.key});
+
+  @override
+  State<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
+  GoogleMapController? _mapController;
+  LatLng _currentPosition = const LatLng(45.5019, -73.5674); // Default: Montreal
+  final Set<Marker> _markers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserLocation();
+    _loadUserMarkers();
+  }
+
+  Future<void> _getUserLocation() async {
+    LocationPermission permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      return;
+    }
+
+    final position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    setState(() {
+      _currentPosition = LatLng(position.latitude, position.longitude);
+      _markers.add(
+        Marker(
+          markerId: const MarkerId("currentLocation"),
+          position: _currentPosition,
+          infoWindow: const InfoWindow(title: "You are here"),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        ),
+      );
+    });
+
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLngZoom(_currentPosition, 14),
+    );
+  }
+
+  Future<void> _loadUserMarkers() async {
+    final users = await FirebaseFirestore.instance.collection('users').get();
+
+    for (var doc in users.docs) {
+      final data = doc.data();
+      if (data['lat'] != null && data['lng'] != null) {
+        final userId = doc.id;
+        final userName = data['name'] ?? "Unknown";
+        final teaches = data['skillsHave'] ?? "";
+        final wants = data['skillsWant'] ?? "";
+
+        _markers.add(
+          Marker(
+            markerId: MarkerId(userId),
+            position: LatLng(data['lat'], data['lng']),
+            infoWindow: InfoWindow(
+              title: userName,
+              snippet: "Teaches: $teaches | Wants: $wants",
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ViewProfileScreen(userId: userId),
+                  ),
+                );
+              },
+            ),
+            icon: BitmapDescriptor.defaultMarker,
+          ),
+        );
+      }
+    }
+
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Filter by Location")),
+      body: GoogleMap(
+        initialCameraPosition: CameraPosition(
+          target: _currentPosition,
+          zoom: 12,
+        ),
+        markers: _markers,
+        myLocationEnabled: true,
+        myLocationButtonEnabled: true,
+        onMapCreated: (controller) {
+          _mapController = controller;
+        },
+      ),
+    );
+  }
+}

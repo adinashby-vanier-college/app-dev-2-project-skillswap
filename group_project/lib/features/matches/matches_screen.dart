@@ -4,21 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../profile/view_profile_screen.dart';
 import '../chat/chat_screen.dart';
-
-// Placeholder map screen (replace with Google Maps later)
-class MapScreen extends StatelessWidget {
-  const MapScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Filter by Location")),
-      body: const Center(
-        child: Text("Map feature coming soon..."),
-      ),
-    );
-  }
-}
+import 'map_screen.dart';
 
 // Utility to generate a stable conversation ID between two users
 String generateConversationId(String uid1, String uid2) {
@@ -56,7 +42,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
     List<Map<String, dynamic>> matches = [];
 
     for (var doc in snapshot.docs) {
-      if (doc.id == currentUser!.uid) continue; // skip self
+      if (doc.id == currentUser!.uid) continue;
       final other = doc.data();
 
       final otherOffered =
@@ -64,7 +50,6 @@ class _MatchesScreenState extends State<MatchesScreen> {
       final otherWanted =
       other['skillsWant'] != null ? [other['skillsWant'].toString()] : [];
 
-      // Mutual match
       bool iCanLearn = myWanted.any((skill) => otherOffered.contains(skill));
       bool iCanTeach = myOffered.any((skill) => otherWanted.contains(skill));
 
@@ -136,7 +121,8 @@ class _MatchesScreenState extends State<MatchesScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text("Teaches: ${match["skillsHave"].join(", ")}"),
-                              Text("Wants to Learn: ${match["skillsWant"].join(", ")}"),
+                              Text(
+                                  "Wants to Learn: ${match["skillsWant"].join(", ")}"),
                               const SizedBox(height: 12),
                               Row(
                                 children: [
@@ -156,7 +142,8 @@ class _MatchesScreenState extends State<MatchesScreen> {
                                         backgroundColor: Colors.redAccent,
                                         foregroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                          BorderRadius.circular(8),
                                         ),
                                       ),
                                       child: const Text("View Profile"),
@@ -166,18 +153,19 @@ class _MatchesScreenState extends State<MatchesScreen> {
                                   Expanded(
                                     child: ElevatedButton(
                                       onPressed: () {
-                                        final myUid =
-                                            FirebaseAuth.instance.currentUser!.uid;
+                                        final myUid = FirebaseAuth
+                                            .instance.currentUser!.uid;
                                         final otherUid = match["uid"];
 
                                         final convoId =
-                                        generateConversationId(myUid, otherUid);
+                                        generateConversationId(
+                                            myUid, otherUid);
 
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (_) =>
-                                                ChatScreen(conversationId: convoId),
+                                            builder: (_) => ChatScreen(
+                                                conversationId: convoId),
                                           ),
                                         );
                                       },
@@ -185,7 +173,8 @@ class _MatchesScreenState extends State<MatchesScreen> {
                                         backgroundColor: Colors.redAccent,
                                         foregroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                          BorderRadius.circular(8),
                                         ),
                                       ),
                                       child: const Text("Start Chat"),
@@ -222,7 +211,8 @@ class _MatchesScreenState extends State<MatchesScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const MapScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const MapScreen()), // <-- Go to map
                     );
                   },
                   style: ElevatedButton.styleFrom(

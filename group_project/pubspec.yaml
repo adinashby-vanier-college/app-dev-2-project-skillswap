@@ -51,6 +51,7 @@ dependencies:
   # For geolocation features (map later)
   geolocator: ^14.0.2
   google_maps_flutter: ^2.6.0
+  geocoding: ^2.1.1
 
   # Timestamp
   intl: ^0.20.2
