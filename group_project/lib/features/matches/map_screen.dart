@@ -41,7 +41,9 @@ class _MapScreenState extends State<MapScreen> {
           markerId: const MarkerId("currentLocation"),
           position: _currentPosition,
           infoWindow: const InfoWindow(title: "You are here"),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueAzure,
+          ),
         ),
       );
     });
@@ -52,36 +54,42 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _loadUserMarkers() async {
-    final users = await FirebaseFirestore.instance.collection('users').get();
+    final snapshot = await FirebaseFirestore.instance.collection('users').get();
 
-    for (var doc in users.docs) {
+    for (var doc in snapshot.docs) {
       final data = doc.data();
-      if (data['lat'] != null && data['lng'] != null) {
-        final userId = doc.id;
-        final userName = data['name'] ?? "Unknown";
-        final teaches = data['skillsHave'] ?? "";
-        final wants = data['skillsWant'] ?? "";
+      final lat = data['lat'];
+      final lng = data['lng'];
 
-        _markers.add(
-          Marker(
-            markerId: MarkerId(userId),
-            position: LatLng(data['lat'], data['lng']),
-            infoWindow: InfoWindow(
-              title: userName,
-              snippet: "Teaches: $teaches | Wants: $wants",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ViewProfileScreen(userId: userId),
-                  ),
-                );
-              },
-            ),
-            icon: BitmapDescriptor.defaultMarker,
+      // Skip if no valid coordinates
+      if (lat == null || lng == null) continue;
+
+      final userId = doc.id;
+      final userName = data['name'] ?? "Unknown";
+      final teaches = data['skillsHave'] ?? "";
+      final wants = data['skillsWant'] ?? "";
+
+      _markers.add(
+        Marker(
+          markerId: MarkerId(userId),
+          position: LatLng(lat, lng),
+          infoWindow: InfoWindow(
+            title: userName,
+            snippet: "Teaches: $teaches | Wants: $wants",
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ViewProfileScreen(userId: userId),
+                ),
+              );
+            },
           ),
-        );
-      }
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueRed,
+          ),
+        ),
+      );
     }
 
     setState(() {});

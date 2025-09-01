@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:geocoding/geocoding.dart';
 import '../../utils/custom_colors.dart';
 
 
@@ -184,15 +185,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       await _user.updateDisplayName(_nameCtrl.text.trim());
       await _user.updatePhotoURL(newPhotoUrl);
 
-      // Upsert Firestore user doc
+      // Prepare Firestore payload
+      String location = _locationCtrl.text.trim();
+      double? lat;
+      double? lng;
+
+      if (location.isNotEmpty) {
+        try {
+          final results = await locationFromAddress(location);
+          if (results.isNotEmpty) {
+            lat = results.first.latitude;
+            lng = results.first.longitude;
+          }
+        } catch (e) {
+          debugPrint("Geocoding failed: $e");
+        }
+      }
+
       final payload = <String, dynamic>{
         'name': _nameCtrl.text.trim(),
         'email': _emailCtrl.text.trim(),
         'bio': _bioCtrl.text.trim(),
-        'location': _locationCtrl.text.trim(),
+        'location': location,
+        'lat': lat,
+        'lng': lng,
         'photoUrl': newPhotoUrl,
         'updatedAt': FieldValue.serverTimestamp(),
       };
+
       await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
@@ -200,13 +220,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (!mounted) return;
       _showSnack('Profile saved');
-      Navigator.of(context).pop(true); // return to previous screen with result
+      Navigator.of(context).pop(true);
     } catch (e) {
       _showSnack('Save failed: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
+
 
   void _showSnack(String msg) {
     if (mounted) {
