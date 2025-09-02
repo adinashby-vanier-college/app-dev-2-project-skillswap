@@ -1,0 +1,8 @@
+# IDEs
+.idea/
+
+# Claude Code generated files
+.claude/
+CLAUDE.md
+claude-*.log
+claude_*.log
