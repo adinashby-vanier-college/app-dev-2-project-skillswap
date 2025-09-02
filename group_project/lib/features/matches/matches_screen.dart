@@ -32,7 +32,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
     final usersRef = FirebaseFirestore.instance.collection('users');
     final snapshot = await usersRef.get();
     
-    print('Debug: Total users in database: ${snapshot.docs.length}');
+    debugPrint('Debug: Total users in database: ${snapshot.docs.length}');
 
     // Current user data
     final currentData =
@@ -57,7 +57,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
       myWanted = [skillsWantData];
     }
 
-    print('Debug: My skills - Have: $myOffered, Want: $myWanted');
+    debugPrint('Debug: My skills - Have: $myOffered, Want: $myWanted');
 
     List<Map<String, dynamic>> matches = [];
 
@@ -108,8 +108,8 @@ class _MatchesScreenState extends State<MatchesScreen> {
         bool iCanLearn = myWanted.any((skill) => otherOffered.contains(skill));
         bool iCanTeach = myOffered.any((skill) => otherWanted.contains(skill));
 
-        print('Debug: Checking ${other["name"]} - Can Learn: $iCanLearn, Can Teach: $iCanTeach');
-        print('  Their skills: Have: $otherOffered, Want: $otherWanted');
+        debugPrint('Debug: Checking ${other["name"]} - Can Learn: $iCanLearn, Can Teach: $iCanTeach');
+        debugPrint('  Their skills: Have: $otherOffered, Want: $otherWanted');
 
         if (iCanLearn && iCanTeach) {
           matches.add(matchData);

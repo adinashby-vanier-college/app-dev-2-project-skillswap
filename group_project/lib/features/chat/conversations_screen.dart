@@ -85,6 +85,13 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       return _userNamesCache[userId]!;
     }
 
+    // Handle mock/debug users
+    final mockUsers = ['Alice', 'Bob', 'Carol', 'Dave', 'Eve', 'Frank', 'Grace', 'Hank'];
+    if (mockUsers.contains(userId)) {
+      _userNamesCache[userId] = userId;
+      return userId;
+    }
+
     try {
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
@@ -162,8 +169,13 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
               final convo = conversations[index];
               final chatPartnerId = convo.participants.firstWhere(
                     (id) => id != _chatService.currentUserId,
-                orElse: () => 'Unknown',
+                orElse: () => '',
               );
+              
+              // Skip conversations with invalid partner IDs
+              if (chatPartnerId.isEmpty || chatPartnerId == 'Unknown') {
+                return const SizedBox.shrink();
+              }
 
               return Dismissible(
                 key: Key(convo.id),

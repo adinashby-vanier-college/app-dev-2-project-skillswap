@@ -4,7 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../widgets/chat_bubble.dart';
 import '../../../utils/loading_spinner.dart';
 import 'models/message.dart';
+import 'models/session_proposal.dart';
 import 'chat_service.dart';
+import 'session_service.dart';
+import 'widgets/session_proposal_dialog.dart';
+import 'widgets/session_proposal_widget.dart';
 
 class ChatScreen extends StatefulWidget {
   final String conversationId;
@@ -22,11 +26,15 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final ChatService _chatService = ChatService();
+  final SessionService _sessionService = SessionService();
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
   bool _isLoading = true;
   bool _canSend = false;
+  bool _showScrollToLatest = false;
+  String? _otherUserId;
+  String _otherUserName = 'SkillSwap Chat';
 
   // Cache for user data
   final Map<String, Map<String, String?>> _userCache = {};
@@ -42,6 +50,8 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     });
 
+    _scrollController.addListener(_handleScroll);
+
     _chatService.markMessagesRead(widget.conversationId);
 
     // Load current user data first, then set loading to false
@@ -54,6 +64,9 @@ class _ChatScreenState extends State<ChatScreen> {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId != null) {
       await _loadUserData(currentUserId);
+      
+      // Get the other user's ID from the conversation
+      await _getOtherUserId();
     }
 
     // Add a small delay to ensure everything is loaded
@@ -61,6 +74,57 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (mounted) {
       setState(() => _isLoading = false);
+    }
+  }
+
+  // Get the other user's ID and name from conversation participants
+  Future<void> _getOtherUserId() async {
+    try {
+      final conversationDoc = await FirebaseFirestore.instance
+          .collection('conversations')
+          .doc(widget.conversationId)
+          .get();
+      
+      if (conversationDoc.exists) {
+        final data = conversationDoc.data();
+        final participants = List<String>.from(data?['participants'] ?? []);
+        final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+        
+        _otherUserId = participants.firstWhere(
+          (id) => id != currentUserId,
+          orElse: () => '',
+        );
+        
+        if (_otherUserId != null && _otherUserId!.isNotEmpty) {
+          _otherUserName = await _getUserName(_otherUserId!);
+          if (mounted) {
+            setState(() {}); // Trigger rebuild to show the name in AppBar
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to get other user ID: $e');
+    }
+  }
+
+  // Get user name with mock user support
+  Future<String> _getUserName(String userId) async {
+    // Handle mock/debug users
+    final mockUsers = ['Alice', 'Bob', 'Carol', 'Dave', 'Eve', 'Frank', 'Grace', 'Hank'];
+    if (mockUsers.contains(userId)) {
+      return userId;
+    }
+
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      final userData = userDoc.data();
+      return userData?['name']?.toString() ?? userId;
+    } catch (e) {
+      return userId;
     }
   }
 
@@ -139,7 +203,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       await _chatService.sendMessage(widget.conversationId, text);
-      _scrollToBottom();
+      _scrollToLatestAfterMessage();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -148,27 +212,34 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+  void _handleScroll() {
+    if (!_scrollController.hasClients) return;
+    
+    final position = _scrollController.position;
+    // Show FAB when scrolled UP towards older messages (away from top/newest)
+    // Since newest messages are at position 0 (top), show FAB when scrolled down from top
+    final shouldShowFAB = position.pixels > 100;
+    
+    if (shouldShowFAB != _showScrollToLatest) {
+      setState(() {
+        _showScrollToLatest = shouldShowFAB;
+      });
+    }
   }
 
-  void _scrollToTop() {
+  void _scrollToLatest() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0.0, // Scroll to top where newest messages are
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void _scrollToLatestAfterMessage() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          0.0,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
+      _scrollToLatest();
     });
   }
 
@@ -197,24 +268,40 @@ class _ChatScreenState extends State<ChatScreen> {
     await _chatService.deleteMessage(widget.conversationId, messageId);
   }
 
+  void _showSessionProposalDialog() {
+    if (_otherUserId == null || _otherUserId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to propose session at this time'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => SessionProposalDialog(
+        conversationId: widget.conversationId,
+        recipientId: _otherUserId!,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isArchived = widget.isArchived;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SkillSwap Chat'),
+        title: Text(_otherUserName),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.vertical_align_top),
-            tooltip: 'Scroll to top',
-            onPressed: _scrollToTop,
-          ),
-          IconButton(
-            icon: const Icon(Icons.vertical_align_bottom),
-            tooltip: 'Scroll to bottom',
-            onPressed: _scrollToBottom,
-          ),
+          if (!isArchived)
+            IconButton(
+              icon: const Icon(Icons.event_note),
+              tooltip: 'Propose Session',
+              onPressed: _showSessionProposalDialog,
+            ),
           IconButton(
             icon: Icon(isArchived ? Icons.unarchive : Icons.archive),
             tooltip: isArchived ? 'Unarchive Chat' : 'Archive Chat',
@@ -227,47 +314,109 @@ class _ChatScreenState extends State<ChatScreen> {
           Expanded(
             child: _isLoading
                 ? const LoadingSpinner()
-                : StreamBuilder<List<Message>>(
-                    stream: _chatService.getMessages(widget.conversationId),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: Text('Error loading messages: ${snapshot.error}'),
-                        );
-                      }
+                : StreamBuilder<List<SessionProposal>>(
+                    stream: _sessionService.getSessionProposals(widget.conversationId),
+                    builder: (context, proposalSnapshot) {
+                      return StreamBuilder<List<Message>>(
+                        stream: _chatService.getMessages(widget.conversationId),
+                        builder: (context, messageSnapshot) {
+                          if (messageSnapshot.hasError) {
+                            return Center(
+                              child: Text('Error loading messages: ${messageSnapshot.error}'),
+                            );
+                          }
 
-                      if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
+                          if (!messageSnapshot.hasData) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
 
-                      final messages = snapshot.data!;
-                      if (messages.isEmpty) {
-                        return const Center(child: Text('No messages yet'));
-                      }
+                          final messages = messageSnapshot.data!;
+                          final proposals = proposalSnapshot.data ?? [];
+                          
+                          if (messages.isEmpty && proposals.isEmpty) {
+                            return const Center(child: Text('No messages yet'));
+                          }
 
-                      // Messages are already in reverse chronological order from the stream
-                      return ListView.builder(
-                        controller: _scrollController,
-                        reverse: true,  // Add this to show messages from bottom to top
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                        itemCount: messages.length,
-                        itemBuilder: (context, index) {
-                          final message = messages[index];
-                          final isMe = message.senderId == _chatService.currentUserId;
+                          // Combine messages and proposals, sorted by timestamp
+                          final allItems = <dynamic>[...messages, ...proposals];
+                          allItems.sort((a, b) {
+                            final aTime = a is Message ? a.timestamp : (a as SessionProposal).createdAt;
+                            final bTime = b is Message ? b.timestamp : (b as SessionProposal).createdAt;
+                            return bTime.compareTo(aTime); // Reverse order for ListView reverse: true
+                          });
 
-                          return FutureBuilder<Map<String, String?>>(
-                            future: _loadUserData(message.senderId),
-                            builder: (context, userSnapshot) {
-                              final userData = userSnapshot.data;
-                              return ChatBubble(
-                                message: message.text,
-                                isMe: isMe,
-                                timestamp: message.timestamp,
-                                onDelete: isMe ? () => _deleteMessage(message.id) : null,
-                                isDeleted: message.isDeleted,
-                                senderName: (userData?['name'] == 'User') ? message.senderId : userData?['name'],
-                                senderPhotoUrl: userData?['photoUrl'],
-                              );
+                          return ListView.builder(
+                            controller: _scrollController,
+                            reverse: true,
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                            itemCount: allItems.length,
+                            itemBuilder: (context, index) {
+                              final item = allItems[index];
+                              
+                              if (item is SessionProposal) {
+                                return SessionProposalWidget(
+                                  proposal: item,
+                                  currentUserId: _chatService.currentUserId,
+                                );
+                              } else if (item is Message) {
+                                final message = item;
+                                final isSystemMessage = message.senderId == 'system';
+                                
+                                // Handle system messages differently
+                                if (isSystemMessage) {
+                                  return Container(
+                                    margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.withAlpha(51),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.info_outline,
+                                          size: 16,
+                                          color: Colors.grey[600],
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            message.text,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.grey[700],
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                                
+                                // Handle regular user messages
+                                final isMe = message.senderId == _chatService.currentUserId;
+
+                                return FutureBuilder<Map<String, String?>>(
+                                  future: _loadUserData(message.senderId),
+                                  builder: (context, userSnapshot) {
+                                    final userData = userSnapshot.data;
+                                    return ChatBubble(
+                                      message: message.text,
+                                      isMe: isMe,
+                                      timestamp: message.timestamp,
+                                      onDelete: isMe ? () => _deleteMessage(message.id) : null,
+                                      isDeleted: message.isDeleted,
+                                      senderName: (userData?['name'] == 'User') ? message.senderId : userData?['name'],
+                                      senderPhotoUrl: userData?['photoUrl'],
+                                    );
+                                  },
+                                );
+                              }
+                              
+                              return const SizedBox.shrink();
                             },
                           );
                         },
@@ -299,6 +448,18 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
+      floatingActionButton: _showScrollToLatest
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 45.0),
+              child: FloatingActionButton(
+                mini: true,
+                onPressed: _scrollToLatest,
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                child: const Icon(Icons.keyboard_arrow_down),
+              ),
+            )
+          : null,
     );
   }
 }

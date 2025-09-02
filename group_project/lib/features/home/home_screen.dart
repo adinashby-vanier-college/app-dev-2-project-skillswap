@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:group_project/features/settings/settings_screen.dart';
 import '../../providers/theme_provider.dart';
 import '../profile/edit_profile_screen.dart';
 import '../profile/edit_skills_screen.dart';
 import '../matches/matches_screen.dart';
+import '../matches/match_history_screen.dart';
+import '../matches/all_sessions_screen.dart';
 import '../chat/chat_service.dart';
 import '../chat/models/conversation_preview.dart';
-import '../chat/chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -57,31 +57,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<String> _getUserName(String userId) async {
-    try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
-      
-      final userData = userDoc.data();
-      return userData?['name']?.toString() ?? 'Unknown';
-    } catch (e) {
-      return 'Unknown';
-    }
-  }
-
-  void _openConversation(ConversationPreview conversation) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ChatScreen(
-          conversationId: conversation.id,
-          isArchived: false,
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +103,6 @@ class _HomeScreenState extends State<HomeScreen> {
           Consumer<ThemeProvider>(
             builder: (context, themeProvider, child) {
               final isDark = themeProvider.themeMode == ThemeMode.dark;
-              final isLight = themeProvider.themeMode == ThemeMode.light;
               
               return IconButton(
                 tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
@@ -250,25 +224,12 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 10),
             GridView.count(
               crossAxisCount: 2,
-              childAspectRatio: 1.1,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
+              childAspectRatio: 1.0,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
               physics: const NeverScrollableScrollPhysics(),
               shrinkWrap: true,
               children: [
-                _featureCard(
-                  icon: Icons.school_outlined,
-                  label: 'My Skills',
-                  color: Colors.teal,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const EditSkillsScreen()),
-                    );
-                  },
-                  theme: theme,
-                ),
-
                 _featureCard(
                   icon: Icons.people_outline,
                   label: 'My Matches',
@@ -283,23 +244,48 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
 
                 _featureCard(
-                  icon: Icons.history,
-                  label: 'Match History',
-                  color: Colors.amber,
+                  icon: Icons.school_outlined,
+                  label: 'My Skills',
+                  color: Colors.teal,
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Match History - Coming Soon!')),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const EditSkillsScreen()),
                     );
                   },
                   theme: theme,
                 ),
 
                 _featureCard(
-                  icon: Icons.message_outlined,
-                  label: 'Messages',
-                  color: Colors.purple,
-                  onTap: _openMessages,
+                  icon: Icons.history,
+                  label: 'Match History',
+                  color: Colors.amber,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MatchHistoryScreen()),
+                    );
+                  },
                   theme: theme,
+                ),
+
+                StreamBuilder<List<ConversationPreview>>(
+                  stream: _chatService.getConversations(includeArchived: false),
+                  builder: (context, snapshot) {
+                    final conversations = snapshot.data ?? [];
+                    final totalUnread = conversations.fold<int>(
+                      0, (sum, conv) => sum + conv.unreadCount
+                    );
+                    
+                    return _featureCardWithBadge(
+                      icon: Icons.message_outlined,
+                      label: 'Messages',
+                      color: Colors.purple,
+                      onTap: _openMessages,
+                      theme: theme,
+                      badgeCount: totalUnread,
+                    );
+                  },
                 ),
                 
                 _featureCard(
@@ -307,8 +293,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: 'Sessions',
                   color: Colors.blueGrey,
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Sessions - Coming Soon!')),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AllSessionsScreen()),
                     );
                   },
                   theme: theme,
@@ -328,111 +315,60 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            _sectionTitle('Recent conversations', colorScheme),
-            const SizedBox(height: 10),
-            StreamBuilder<List<ConversationPreview>>(
-              stream: _chatService.getConversations(includeArchived: false),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const SizedBox(
-                    height: 110,
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                
-                final conversations = snapshot.data ?? [];
-                final recentConversations = conversations.take(2).toList();
-                
-                if (recentConversations.isEmpty) {
-                  return Container(
-                    height: 110,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.chat_bubble_outline, 
-                               color: Colors.grey[400], size: 32),
-                          const SizedBox(height: 8),
-                          Text(
-                            'No recent conversations',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-                
-                return SizedBox(
-                  height: 110,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: recentConversations.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 12),
-                    itemBuilder: (context, index) {
-                      final convo = recentConversations[index];
-                      final chatPartnerId = convo.participants.firstWhere(
-                        (id) => id != _chatService.currentUserId,
-                        orElse: () => 'Unknown',
-                      );
-                      
-                      return FutureBuilder<String>(
-                        future: _getUserName(chatPartnerId),
-                        builder: (context, userNameSnapshot) {
-                          final userName = userNameSnapshot.data ?? chatPartnerId;
-                          final initials = userName.isNotEmpty 
-                              ? userName.characters.first.toUpperCase()
-                              : 'U';
-                          
-                          return _conversationChip(
-                            initials: initials,
-                            title: userName,
-                            subtitle: convo.lastMessage.isEmpty || convo.lastMessage == 'message was deleted'
-                                ? 'No messages yet'
-                                : convo.lastMessage,
-                            onTap: () => _openConversation(convo),
-                            theme: theme,
-                            hasUnread: convo.unreadCount > 0,
-                          );
-                        },
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
           ],
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        backgroundColor: theme.cardColor,
-        onDestinationSelected: (i) {
-          if (i == 1) {
-            _openMessages();
-            return;
-          }
-          if (i == 2) {
-            _openEditProfile();
-            return;
-          }
-          setState(() => _currentIndex = i);
+      bottomNavigationBar: StreamBuilder<List<ConversationPreview>>(
+        stream: _chatService.getConversations(includeArchived: false),
+        builder: (context, snapshot) {
+          final conversations = snapshot.data ?? [];
+          final totalUnread = conversations.fold<int>(
+            0, (sum, conv) => sum + conv.unreadCount
+          );
+          
+          return NavigationBar(
+            selectedIndex: _currentIndex,
+            backgroundColor: theme.cardColor,
+            onDestinationSelected: (i) {
+              if (i == 1) {
+                _openMessages();
+                return;
+              }
+              if (i == 2) {
+                _openEditProfile();
+                return;
+              }
+              setState(() => _currentIndex = i);
+            },
+            destinations: [
+              const NavigationDestination(
+                icon: Icon(Icons.home_outlined), 
+                selectedIcon: Icon(Icons.home), 
+                label: 'Home'
+              ),
+              NavigationDestination(
+                icon: totalUnread > 0 
+                    ? Badge(
+                        label: Text(totalUnread > 99 ? '99+' : '$totalUnread'),
+                        child: const Icon(Icons.message_outlined),
+                      )
+                    : const Icon(Icons.message_outlined),
+                selectedIcon: totalUnread > 0 
+                    ? Badge(
+                        label: Text(totalUnread > 99 ? '99+' : '$totalUnread'),
+                        child: const Icon(Icons.message),
+                      )
+                    : const Icon(Icons.message),
+                label: 'Messages',
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.person_outline), 
+                selectedIcon: Icon(Icons.person), 
+                label: 'Profile'
+              ),
+            ],
+          );
         },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.message_outlined), selectedIcon: Icon(Icons.message), label: 'Messages'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
-        ],
       ),
     );
   }
@@ -455,224 +391,274 @@ class _HomeScreenState extends State<HomeScreen> {
     required VoidCallback onTap,
     required ThemeData theme,
   }) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: Ink(
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: theme.shadowColor.withAlpha(10),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
-            ),
-          ],
-          border: Border.all(color: theme.colorScheme.outline.withAlpha(51)),
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark 
+              ? [
+                  theme.cardColor,
+                  theme.cardColor.withAlpha(200),
+                ]
+              : [
+                  Colors.white,
+                  Colors.grey.shade50,
+                ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                height: 44,
-                width: 44,
-                decoration: BoxDecoration(
-                  color: color.withAlpha(31),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 26),
-              ),
-              const Spacer(),
-              Text(
-                label,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-            ],
+        boxShadow: [
+          BoxShadow(
+            color: color.withAlpha(30),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+            spreadRadius: -5,
           ),
+          BoxShadow(
+            color: isDark 
+                ? Colors.black.withAlpha(40)
+                : Colors.grey.shade300.withAlpha(100),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+            spreadRadius: -8,
+          ),
+        ],
+        border: Border.all(
+          color: isDark 
+              ? Colors.white.withAlpha(20)
+              : color.withAlpha(40),
+          width: 1,
         ),
       ),
-    );
-  }
-
-  Widget _matchChip({
-    required String initials,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    required ThemeData theme,
-  }) {
-    final photoUrl = _user?.photoURL;
-    final String initial = initials.toUpperCase();
-
-    return Material(
-      color: theme.cardColor,
-      borderRadius: BorderRadius.circular(14),
-      elevation: 1,
-      shadowColor: theme.shadowColor.withAlpha(20),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          width: 190,
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: theme.colorScheme.primary.withAlpha(50),
-                backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
-                    ? NetworkImage(photoUrl)
-                    : null,
-                child: (photoUrl == null || photoUrl.isEmpty)
-                    ? Text(
-                  initial,
-                  style: TextStyle(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          highlightColor: color.withAlpha(20),
+          splashColor: color.withAlpha(30),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 52,
+                  width: 52,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        color.withAlpha(120),
+                        color.withAlpha(80),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withAlpha(60),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                        spreadRadius: -2,
+                      ),
+                    ],
                   ),
-                )
-                    : null,
-              ),
-
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
-                        )),
-                    const SizedBox(height: 2),
-                    Text(subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            color: theme.colorScheme.onSurface.withAlpha(153),
-                            fontSize: 12.5)),
-                  ],
+                  child: Icon(
+                    icon, 
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.chat_bubble_outline,
-                  color: theme.colorScheme.onSurface.withAlpha(153),
+                const Spacer(),
+                Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: theme.colorScheme.onSurface,
+                    height: 1.2,
+                  ),
                 ),
-                onPressed: onTap,
-                tooltip: 'Message',
-              ),
-            ],
+                const SizedBox(height: 4),
+                Container(
+                  height: 3,
+                  width: 30,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        color,
+                        color.withAlpha(100),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _conversationChip({
-    required String initials,
-    required String title,
-    required String subtitle,
+  Widget _featureCardWithBadge({
+    required IconData icon,
+    required String label,
+    required Color color,
     required VoidCallback onTap,
     required ThemeData theme,
-    required bool hasUnread,
+    required int badgeCount,
   }) {
-    return Material(
-      color: theme.cardColor,
-      borderRadius: BorderRadius.circular(14),
-      elevation: 1,
-      shadowColor: theme.shadowColor.withAlpha(20),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          width: 190,
-          padding: const EdgeInsets.all(12),
-          decoration: hasUnread 
-              ? BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.red, width: 2),
-                )
-              : null,
-          child: Row(
-            children: [
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: theme.colorScheme.primary.withAlpha(50),
-                    child: Text(
-                      initials,
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark 
+              ? [
+                  theme.cardColor,
+                  theme.cardColor.withAlpha(200),
+                ]
+              : [
+                  Colors.white,
+                  Colors.grey.shade50,
+                ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withAlpha(30),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+            spreadRadius: -5,
+          ),
+          BoxShadow(
+            color: isDark 
+                ? Colors.black.withAlpha(40)
+                : Colors.grey.shade300.withAlpha(100),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+            spreadRadius: -8,
+          ),
+        ],
+        border: Border.all(
+          color: isDark 
+              ? Colors.white.withAlpha(20)
+              : color.withAlpha(40),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          highlightColor: color.withAlpha(20),
+          splashColor: color.withAlpha(30),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
+                  children: [
+                    Container(
+                      height: 52,
+                      width: 52,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            color.withAlpha(120),
+                            color.withAlpha(80),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withAlpha(60),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                            spreadRadius: -2,
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        icon, 
+                        color: Colors.white,
+                        size: 28,
                       ),
                     ),
-                  ),
-                  if (hasUnread)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
+                    if (badgeCount > 0)
+                      Positioned(
+                        right: -2,
+                        top: -2,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 20,
+                            minHeight: 20,
+                          ),
+                          child: Text(
+                            badgeCount > 99 ? '99+' : '$badgeCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w600,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurface.withAlpha(153),
-                        fontSize: 12.5,
-                        fontStyle: subtitle == 'No messages yet' ? FontStyle.italic : FontStyle.normal,
-                      ),
-                    ),
                   ],
                 ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: theme.colorScheme.onSurface.withAlpha(100),
-              ),
-            ],
+                const Spacer(),
+                Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: theme.colorScheme.onSurface,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  height: 3,
+                  width: 30,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        color,
+                        color.withAlpha(100),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
+
 }

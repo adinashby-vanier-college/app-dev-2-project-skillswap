@@ -99,7 +99,7 @@ class ChatService {
       });
     } catch (e) {
       // Ignore errors in dummy responses
-      print('Dummy response failed: $e');
+      debugPrint('Dummy response failed: $e');
     }
   }
 
@@ -119,6 +119,21 @@ class ChatService {
 
       if (data == null) return null;
 
+      // Validate participants
+      final participantsList = data['participants'] as List<dynamic>?;
+      if (participantsList == null || participantsList.isEmpty) return null;
+      
+      final participants = List<String>.from(participantsList);
+      
+      // Must have exactly 2 participants and current user must be one of them
+      if (participants.length != 2 || !participants.contains(currentUserId)) return null;
+      
+      // Get the other participant
+      final otherParticipant = participants.firstWhere((id) => id != currentUserId);
+      
+      // Skip conversations with invalid participant IDs
+      if (otherParticipant.isEmpty || otherParticipant == 'Unknown') return null;
+
       final unreadCountsMap = data['unreadCounts'] as Map<String, dynamic>?;
 
       // Get last message
@@ -132,7 +147,7 @@ class ChatService {
         id: doc.id,
         lastMessage: lastMessage,
         lastMessageTime: (data['lastMessageTime'] as Timestamp?)?.toDate() ?? DateTime.now(),
-        participants: List<String>.from(data['participants'] ?? []),
+        participants: participants,
         unreadCount: unreadCountsMap?[currentUserId] as int? ?? 0,
         status: (data['status'] as Map<String, dynamic>?)?[currentUserId] ?? 'active',
         isArchived: data['archived'] as bool? ?? false,
@@ -150,8 +165,25 @@ class ChatService {
         .collection('messages')
         .orderBy('timestamp', descending: true);  // Changed to descending order
 
-    return messagesRef.snapshots().map((snapshot) =>
-        snapshot.docs.map((doc) => Message.fromMap(doc.data(), doc.id, conversationId)).toList());
+    return messagesRef.snapshots().map((snapshot) {
+      final messages = <Message>[];
+      
+      for (var doc in snapshot.docs) {
+        try {
+          final data = doc.data();
+          debugPrint('Processing message doc ${doc.id}: $data');
+          
+          final message = Message.fromMap(data, doc.id, conversationId);
+          messages.add(message);
+        } catch (e) {
+          debugPrint('Error processing message ${doc.id}: $e');
+          debugPrint('Message data: ${doc.data()}');
+          // Skip this message and continue with others
+        }
+      }
+      
+      return messages;
+    });
   }
 
   Future<void> markMessagesRead(String conversationId) async {
