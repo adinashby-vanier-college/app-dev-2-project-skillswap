@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'models/conversation_preview.dart';
 import 'chat_service.dart';
 import 'chat_screen.dart';
@@ -13,6 +14,7 @@ class ArchivedChatsScreen extends StatefulWidget {
 
 class _ArchivedChatsScreenState extends State<ArchivedChatsScreen> {
   final ChatService _chatService = ChatService();
+  final Map<String, String> _userNamesCache = {};
 
   Future<void> _unarchiveConversation(String convoId) async {
     try {
@@ -45,6 +47,27 @@ class _ArchivedChatsScreenState extends State<ArchivedChatsScreen> {
           SnackBar(content: Text('Failed to delete conversation: $e')),
         );
       }
+    }
+  }
+
+  Future<String> _getUserName(String userId) async {
+    if (_userNamesCache.containsKey(userId)) {
+      return _userNamesCache[userId]!;
+    }
+
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      final userData = userDoc.data();
+      final name = userData?['name']?.toString() ?? userId;
+      _userNamesCache[userId] = name;
+      return name;
+    } catch (e) {
+      _userNamesCache[userId] = userId;
+      return userId;
     }
   }
 
@@ -95,41 +118,48 @@ class _ArchivedChatsScreenState extends State<ArchivedChatsScreen> {
                   await _deleteConversation(convo.id);
                   return false;
                 },
-                child: ListTile(
-                  leading: ProfileAvatar(
-                    displayName: chatPartnerId,
-                    // imageUrl: null, // If you have a photo URL, pass it here
-                  ),
-                  title: Text('Chat with $chatPartnerId'),
-                  subtitle: Text(
-                    (convo.lastMessage == 'message was deleted' || convo.lastMessage.isEmpty)
-                        ? 'message was deleted'
-                        : convo.lastMessage,
-                    style: TextStyle(
-                      fontStyle: (convo.lastMessage == 'message was deleted' || convo.lastMessage.isEmpty)
-                          ? FontStyle.italic
-                          : FontStyle.normal,
-                      color: (convo.lastMessage == 'message was deleted' || convo.lastMessage.isEmpty)
-                          ? Colors.grey[600]
-                          : null,
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChatScreen(
-                          conversationId: convo.id,
-                          isArchived: true,  // Archived chat
+                child: FutureBuilder<String>(
+                  future: _getUserName(chatPartnerId),
+                  builder: (context, userNameSnapshot) {
+                    final userName = userNameSnapshot.data ?? chatPartnerId;
+                    
+                    return ListTile(
+                      leading: ProfileAvatar(
+                        displayName: userName,
+                        // imageUrl: null, // If you have a photo URL, pass it here
+                      ),
+                      title: Text('Chat with $userName'),
+                      subtitle: Text(
+                        (convo.lastMessage == 'message was deleted' || convo.lastMessage.isEmpty)
+                            ? 'message was deleted'
+                            : convo.lastMessage,
+                        style: TextStyle(
+                          fontStyle: (convo.lastMessage == 'message was deleted' || convo.lastMessage.isEmpty)
+                              ? FontStyle.italic
+                              : FontStyle.normal,
+                          color: (convo.lastMessage == 'message was deleted' || convo.lastMessage.isEmpty)
+                              ? Colors.grey[600]
+                              : null,
                         ),
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ChatScreen(
+                              conversationId: convo.id,
+                              isArchived: true,  // Archived chat
+                            ),
+                          ),
+                        );
+                      },
+                      trailing: IconButton(
+                        icon: const Icon(Icons.unarchive),
+                        tooltip: 'Unarchive',
+                        onPressed: () => _unarchiveConversation(convo.id),
                       ),
                     );
                   },
-                  trailing: IconButton(
-                    icon: const Icon(Icons.unarchive),
-                    tooltip: 'Unarchive',
-                    onPressed: () => _unarchiveConversation(convo.id),
-                  ),
                 ),
               );
             },

@@ -58,16 +58,45 @@ class _MapScreenState extends State<MapScreen> {
 
     for (var doc in snapshot.docs) {
       final data = doc.data();
-      final lat = data['lat'];
-      final lng = data['lng'];
+      
+      // Try both formats - old format (lat/lng) and new format (location object)
+      double? lat, lng;
+      
+      if (data['lat'] != null && data['lng'] != null) {
+        // Old format
+        lat = data['lat']?.toDouble();
+        lng = data['lng']?.toDouble();
+      } else if (data['location'] != null) {
+        // New format 
+        final location = data['location'] as Map<String, dynamic>;
+        lat = location['latitude']?.toDouble();
+        lng = location['longitude']?.toDouble();
+      }
 
       // Skip if no valid coordinates
       if (lat == null || lng == null) continue;
 
       final userId = doc.id;
       final userName = data['name'] ?? "Unknown";
-      final teaches = data['skillsHave'] ?? "";
-      final wants = data['skillsWant'] ?? "";
+      
+      // Handle both old format (string) and new format (array) for skills
+      String teaches = "";
+      String wants = "";
+      
+      final skillsHaveData = data['skillsHave'];
+      final skillsWantData = data['skillsWant'];
+      
+      if (skillsHaveData is List) {
+        teaches = skillsHaveData.join(", ");
+      } else if (skillsHaveData is String) {
+        teaches = skillsHaveData;
+      }
+      
+      if (skillsWantData is List) {
+        wants = skillsWantData.join(", ");
+      } else if (skillsWantData is String) {
+        wants = skillsWantData;
+      }
 
       _markers.add(
         Marker(

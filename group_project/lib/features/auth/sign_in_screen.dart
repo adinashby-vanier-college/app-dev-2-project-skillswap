@@ -15,6 +15,27 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
 
+  Future<void> _signIn() async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      await _authService.signInWithEmail(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text("Signed in successfully")),
+      );
+
+      navigator.pushReplacementNamed('/home');
+
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,6 +63,8 @@ class _SignInScreenState extends State<SignInScreen> {
               const SizedBox(height: 32),
               TextField(
                 controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(
                   labelText: "Email",
                   hintText: "example@email.com",
@@ -51,6 +74,8 @@ class _SignInScreenState extends State<SignInScreen> {
               TextField(
                 controller: _passwordController,
                 obscureText: true,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _signIn(),
                 decoration: const InputDecoration(
                   labelText: "Password",
                   suffixIcon: Icon(Icons.visibility_off),
@@ -59,26 +84,7 @@ class _SignInScreenState extends State<SignInScreen> {
               const SizedBox(height: 24),
               CustomButton(
                 text: "Sign in",
-                onPressed: () async {
-                  final scaffoldMessenger = ScaffoldMessenger.of(context);
-                  final navigator = Navigator.of(context);
-                  try {
-                    await _authService.signInWithEmail(
-                      _emailController.text.trim(),
-                      _passwordController.text.trim(),
-                    );
-                    scaffoldMessenger.showSnackBar(
-                      const SnackBar(content: Text("Signed in successfully")),
-                    );
-
-                    navigator.pushReplacementNamed('/home');
-
-                  } catch (e) {
-                    scaffoldMessenger.showSnackBar(
-                      SnackBar(content: Text(e.toString())),
-                    );
-                  }
-                },
+                onPressed: _signIn,
               ),
               const SizedBox(height: 16),
               const Text("or use one of your social profiles"),

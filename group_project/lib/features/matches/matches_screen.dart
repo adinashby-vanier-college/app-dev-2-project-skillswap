@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../profile/view_profile_screen.dart';
 import '../chat/chat_screen.dart';
+import '../chat/chat_service.dart';
 import 'map_screen.dart';
 
 // Utility to generate a stable conversation ID between two users
@@ -13,7 +14,9 @@ String generateConversationId(String uid1, String uid2) {
 }
 
 class MatchesScreen extends StatefulWidget {
-  const MatchesScreen({super.key});
+  final String? searchQuery;
+  
+  const MatchesScreen({super.key, this.searchQuery});
 
   @override
   State<MatchesScreen> createState() => _MatchesScreenState();
@@ -21,23 +24,40 @@ class MatchesScreen extends StatefulWidget {
 
 class _MatchesScreenState extends State<MatchesScreen> {
   final currentUser = FirebaseAuth.instance.currentUser;
+  final ChatService _chatService = ChatService();
 
   Future<List<Map<String, dynamic>>> _getMatches() async {
     if (currentUser == null) return [];
 
     final usersRef = FirebaseFirestore.instance.collection('users');
     final snapshot = await usersRef.get();
+    
+    print('Debug: Total users in database: ${snapshot.docs.length}');
 
     // Current user data
     final currentData =
     snapshot.docs.firstWhere((d) => d.id == currentUser!.uid).data();
 
-    final myOffered = currentData['skillsHave'] != null
-        ? [currentData['skillsHave'].toString()]
-        : [];
-    final myWanted = currentData['skillsWant'] != null
-        ? [currentData['skillsWant'].toString()]
-        : [];
+    // Handle both old format (string) and new format (array)
+    List<String> myOffered = [];
+    List<String> myWanted = [];
+    
+    final skillsHaveData = currentData['skillsHave'];
+    final skillsWantData = currentData['skillsWant'];
+    
+    if (skillsHaveData is List) {
+      myOffered = List<String>.from(skillsHaveData);
+    } else if (skillsHaveData is String && skillsHaveData.isNotEmpty) {
+      myOffered = [skillsHaveData];
+    }
+    
+    if (skillsWantData is List) {
+      myWanted = List<String>.from(skillsWantData);
+    } else if (skillsWantData is String && skillsWantData.isNotEmpty) {
+      myWanted = [skillsWantData];
+    }
+
+    print('Debug: My skills - Have: $myOffered, Want: $myWanted');
 
     List<Map<String, dynamic>> matches = [];
 
@@ -45,21 +65,55 @@ class _MatchesScreenState extends State<MatchesScreen> {
       if (doc.id == currentUser!.uid) continue;
       final other = doc.data();
 
-      final otherOffered =
-      other['skillsHave'] != null ? [other['skillsHave'].toString()] : [];
-      final otherWanted =
-      other['skillsWant'] != null ? [other['skillsWant'].toString()] : [];
+      // Handle both old format (string) and new format (array) for other users
+      List<String> otherOffered = [];
+      List<String> otherWanted = [];
+      
+      final otherSkillsHaveData = other['skillsHave'];
+      final otherSkillsWantData = other['skillsWant'];
+      
+      if (otherSkillsHaveData is List) {
+        otherOffered = List<String>.from(otherSkillsHaveData);
+      } else if (otherSkillsHaveData is String && otherSkillsHaveData.isNotEmpty) {
+        otherOffered = [otherSkillsHaveData];
+      }
+      
+      if (otherSkillsWantData is List) {
+        otherWanted = List<String>.from(otherSkillsWantData);
+      } else if (otherSkillsWantData is String && otherSkillsWantData.isNotEmpty) {
+        otherWanted = [otherSkillsWantData];
+      }
 
-      bool iCanLearn = myWanted.any((skill) => otherOffered.contains(skill));
-      bool iCanTeach = myOffered.any((skill) => otherWanted.contains(skill));
+      final matchData = {
+        "uid": doc.id,
+        "name": other["name"] ?? "Unknown",
+        "skillsHave": otherOffered,
+        "skillsWant": otherWanted,
+      };
 
-      if (iCanLearn && iCanTeach) {
-        matches.add({
-          "uid": doc.id,
-          "name": other["name"] ?? "Unknown",
-          "skillsHave": otherOffered,
-          "skillsWant": otherWanted,
-        });
+      // If search query provided, search all users (bypass matching logic)
+      if (widget.searchQuery != null && widget.searchQuery!.isNotEmpty) {
+        final query = widget.searchQuery!.toLowerCase();
+        final name = matchData["name"].toString().toLowerCase();
+        final skillsHave = otherOffered.join(" ").toLowerCase();
+        final skillsWant = otherWanted.join(" ").toLowerCase();
+        
+        if (name.contains(query) || 
+            skillsHave.contains(query) || 
+            skillsWant.contains(query)) {
+          matches.add(matchData);
+        }
+      } else {
+        // No search query - use normal matching logic
+        bool iCanLearn = myWanted.any((skill) => otherOffered.contains(skill));
+        bool iCanTeach = myOffered.any((skill) => otherWanted.contains(skill));
+
+        print('Debug: Checking ${other["name"]} - Can Learn: $iCanLearn, Can Teach: $iCanTeach');
+        print('  Their skills: Have: $otherOffered, Want: $otherWanted');
+
+        if (iCanLearn && iCanTeach) {
+          matches.add(matchData);
+        }
       }
     }
     return matches;
@@ -69,7 +123,9 @@ class _MatchesScreenState extends State<MatchesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Recommended Matches"),
+        title: Text(widget.searchQuery != null && widget.searchQuery!.isNotEmpty 
+            ? "Everyone with '${widget.searchQuery}'" 
+            : "Recommended Matches"),
         centerTitle: true,
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
@@ -83,7 +139,17 @@ class _MatchesScreenState extends State<MatchesScreen> {
           }
           final matches = snapshot.data ?? [];
           if (matches.isEmpty) {
-            return const Center(child: Text("No matches found yet."));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("No matches found yet."),
+                  const SizedBox(height: 20),
+                  Text("Debug: Found ${matches.length} matches"),
+                  const Text("Make sure you have skills added in Edit Skills!"),
+                ],
+              ),
+            );
           }
 
           return Padding(
@@ -152,7 +218,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: ElevatedButton(
-                                      onPressed: () {
+                                      onPressed: () async {
                                         final myUid = FirebaseAuth
                                             .instance.currentUser!.uid;
                                         final otherUid = match["uid"];
@@ -161,13 +227,24 @@ class _MatchesScreenState extends State<MatchesScreen> {
                                         generateConversationId(
                                             myUid, otherUid);
 
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => ChatScreen(
-                                                conversationId: convoId),
-                                          ),
-                                        );
+                                        try {
+                                          // Initialize the conversation first
+                                          await _chatService.initializeConversation(convoId);
+                                          
+                                          if (!mounted) return;
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => ChatScreen(
+                                                  conversationId: convoId),
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          if (!mounted) return;
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Failed to start chat: $e')),
+                                          );
+                                        }
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.redAccent,

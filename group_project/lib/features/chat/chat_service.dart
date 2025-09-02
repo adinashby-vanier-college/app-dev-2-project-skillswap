@@ -47,6 +47,60 @@ class ChatService {
         'lastMessageDeleted': false, // Reset deletion flag on new message
       }, SetOptions(merge: true));
     });
+
+    // Add dummy auto-response for testing
+    _sendDummyResponse(conversationId, chatPartnerId);
+  }
+
+  // Dummy auto-response system for testing
+  void _sendDummyResponse(String conversationId, String chatPartnerId) async {
+    // Wait 2-5 seconds before responding
+    await Future.delayed(Duration(seconds: 2 + (DateTime.now().millisecond % 4)));
+    
+    final responses = [
+      "That sounds interesting! Tell me more.",
+      "I'd love to learn that skill from you.",
+      "When would be a good time to practice together?",
+      "I can help you with that in exchange!",
+      "Great idea! Let's set up a time to meet.",
+      "I have some experience with that. Happy to share!",
+      "That would be really helpful. Thank you!",
+      "I'm free this weekend if you want to practice.",
+      "Do you have any specific questions about it?",
+      "I've been wanting to learn that for a while!",
+      "Perfect! I can teach you what I know about that.",
+      "Sounds like a great skill exchange opportunity!"
+    ];
+    
+    final randomResponse = responses[DateTime.now().millisecond % responses.length];
+    
+    try {
+      final convoRef = _firestore.collection('conversations').doc(conversationId);
+      final responseMessageRef = convoRef.collection('messages').doc();
+      final responseTime = DateTime.now();
+
+      await _firestore.runTransaction((transaction) async {
+        transaction.set(responseMessageRef, {
+          'senderId': chatPartnerId,
+          'receiverId': currentUserId,
+          'text': randomResponse,
+          'timestamp': responseTime,
+          'isRead': false,
+        });
+
+        transaction.set(convoRef, {
+          'lastMessage': randomResponse,
+          'lastMessageTime': responseTime,
+          'unreadCounts': {
+            currentUserId: FieldValue.increment(1),
+            chatPartnerId: 0,
+          },
+        }, SetOptions(merge: true));
+      });
+    } catch (e) {
+      // Ignore errors in dummy responses
+      print('Dummy response failed: $e');
+    }
   }
 
   // -------------------------
@@ -161,6 +215,37 @@ class ChatService {
   Future<void> archiveConversation(String convoId, {bool archive = true}) async {
     final convoRef = _firestore.collection('conversations').doc(convoId);
     await convoRef.set({'archived': archive}, SetOptions(merge: true));
+  }
+
+  // -------------------------
+  // INITIALIZE CONVERSATION
+  // -------------------------
+  Future<void> initializeConversation(String conversationId) async {
+    final convoRef = _firestore.collection('conversations').doc(conversationId);
+    
+    // Check if conversation already exists
+    final doc = await convoRef.get();
+    if (doc.exists) return; // Conversation already exists
+    
+    final participants = conversationId.split('_');
+    if (!participants.contains(currentUserId)) {
+      throw Exception('Current user is not part of this conversation');
+    }
+    
+    // Create empty conversation document
+    await convoRef.set({
+      'participants': participants,
+      'lastMessage': '',
+      'lastMessageTime': DateTime.now(),
+      'unreadCounts': {
+        for (var p in participants) p: 0
+      },
+      'status': {
+        for (var p in participants) p: 'active'
+      },
+      'archived': false,
+      'lastMessageDeleted': false,
+    });
   }
 
   // -------------------------

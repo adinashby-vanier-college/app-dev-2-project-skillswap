@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import 'package:group_project/features/settings/settings_screen.dart';
+import '../../providers/theme_provider.dart';
 import '../profile/edit_profile_screen.dart';
 import '../profile/edit_skills_screen.dart';
 import '../matches/matches_screen.dart';
+import '../chat/chat_service.dart';
+import '../chat/models/conversation_preview.dart';
+import '../chat/chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,6 +21,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   final _searchCtrl = TextEditingController();
+  final ChatService _chatService = ChatService();
 
   User? get _user => FirebaseAuth.instance.currentUser;
 
@@ -37,6 +44,43 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openMessages() {
     Navigator.pushNamed(context, '/conversations');
+  }
+
+  void _performSearch(String query) {
+    if (query.trim().isEmpty) return;
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MatchesScreen(searchQuery: query.trim()),
+      ),
+    );
+  }
+
+  Future<String> _getUserName(String userId) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      final userData = userDoc.data();
+      return userData?['name']?.toString() ?? 'Unknown';
+    } catch (e) {
+      return 'Unknown';
+    }
+  }
+
+  void _openConversation(ConversationPreview conversation) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatScreen(
+          conversationId: conversation.id,
+          isArchived: false,
+        ),
+      ),
+    );
   }
 
   @override
@@ -81,6 +125,28 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
+          Consumer<ThemeProvider>(
+            builder: (context, themeProvider, child) {
+              final isDark = themeProvider.themeMode == ThemeMode.dark;
+              final isLight = themeProvider.themeMode == ThemeMode.light;
+              
+              return IconButton(
+                tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
+                icon: Icon(
+                  isDark ? Icons.light_mode : Icons.dark_mode,
+                  color: colorScheme.onSurface,
+                ),
+                onPressed: () {
+                  // Toggle between light and dark (ignore system mode for simplicity)
+                  if (isDark) {
+                    themeProvider.setTheme('light');
+                  } else {
+                    themeProvider.setTheme('dark');
+                  }
+                },
+              );
+            },
+          ),
           IconButton(
             tooltip: 'Notifications',
             icon: Icon(Icons.notifications_outlined, color: colorScheme.onSurface),
@@ -151,10 +217,15 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: _searchCtrl,
+              textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: 'Search skills, people, topics…',
+                hintText: 'Search any skill or person…',
                 hintStyle: TextStyle(color: colorScheme.onSurface.withAlpha(128)),
                 prefixIcon: Icon(Icons.search, color: colorScheme.onSurface.withAlpha(153)),
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.send, color: colorScheme.primary),
+                  onPressed: () => _performSearch(_searchCtrl.text),
+                ),
                 filled: true,
                 fillColor: theme.cardColor,
                 contentPadding: const EdgeInsets.symmetric(vertical: 14),
@@ -172,7 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               style: TextStyle(color: colorScheme.onSurface),
-              onSubmitted: (q) {},
+              onSubmitted: _performSearch,
             ),
             const SizedBox(height: 18),
             _sectionTitle('Quick actions', colorScheme),
@@ -186,16 +257,8 @@ class _HomeScreenState extends State<HomeScreen> {
               shrinkWrap: true,
               children: [
                 _featureCard(
-                  icon: Icons.person_outline,
-                  label: 'Edit Profile',
-                  color: Colors.indigo,
-                  onTap: _openEditProfile,
-                  theme: theme,
-                ),
-
-                _featureCard(
                   icon: Icons.school_outlined,
-                  label: 'Edit Skills',
+                  label: 'My Skills',
                   color: Colors.teal,
                   onTap: () {
                     Navigator.push(
@@ -206,15 +269,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   theme: theme,
                 ),
 
-
                 _featureCard(
                   icon: Icons.people_outline,
-                  label: 'Matches',
+                  label: 'My Matches',
                   color: Colors.deepOrange,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => const MatchesScreen()),
+                    );
+                  },
+                  theme: theme,
+                ),
+
+                _featureCard(
+                  icon: Icons.history,
+                  label: 'Match History',
+                  color: Colors.amber,
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Match History - Coming Soon!')),
                     );
                   },
                   theme: theme,
@@ -227,13 +301,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: _openMessages,
                   theme: theme,
                 ),
+                
                 _featureCard(
                   icon: Icons.event_outlined,
                   label: 'Sessions',
                   color: Colors.blueGrey,
-                  onTap: () {},
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Sessions - Coming Soon!')),
+                    );
+                  },
                   theme: theme,
                 ),
+                
                 _featureCard(
                   icon: Icons.settings_outlined,
                   label: 'Settings',
@@ -242,30 +322,94 @@ class _HomeScreenState extends State<HomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                    );},
+                    );
+                  },
                   theme: theme,
                 ),
               ],
             ),
             const SizedBox(height: 20),
-            _sectionTitle('Recent matches', colorScheme),
+            _sectionTitle('Recent conversations', colorScheme),
             const SizedBox(height: 10),
-            SizedBox(
-              height: 110,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: 10,
-                separatorBuilder: (_, _) => const SizedBox(width: 12),
-                itemBuilder: (context, i) {
-                  return _matchChip(
-                    initials: 'U$i',
-                    title: 'User $i',
-                    subtitle: i.isEven ? 'Guitar' : 'Java',
-                    onTap: _openMessages,
-                    theme: theme,
+            StreamBuilder<List<ConversationPreview>>(
+              stream: _chatService.getConversations(includeArchived: false),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 110,
+                    child: Center(child: CircularProgressIndicator()),
                   );
-                },
-              ),
+                }
+                
+                final conversations = snapshot.data ?? [];
+                final recentConversations = conversations.take(2).toList();
+                
+                if (recentConversations.isEmpty) {
+                  return Container(
+                    height: 110,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.chat_bubble_outline, 
+                               color: Colors.grey[400], size: 32),
+                          const SizedBox(height: 8),
+                          Text(
+                            'No recent conversations',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                
+                return SizedBox(
+                  height: 110,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: recentConversations.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 12),
+                    itemBuilder: (context, index) {
+                      final convo = recentConversations[index];
+                      final chatPartnerId = convo.participants.firstWhere(
+                        (id) => id != _chatService.currentUserId,
+                        orElse: () => 'Unknown',
+                      );
+                      
+                      return FutureBuilder<String>(
+                        future: _getUserName(chatPartnerId),
+                        builder: (context, userNameSnapshot) {
+                          final userName = userNameSnapshot.data ?? chatPartnerId;
+                          final initials = userName.isNotEmpty 
+                              ? userName.characters.first.toUpperCase()
+                              : 'U';
+                          
+                          return _conversationChip(
+                            initials: initials,
+                            title: userName,
+                            subtitle: convo.lastMessage.isEmpty || convo.lastMessage == 'message was deleted'
+                                ? 'No messages yet'
+                                : convo.lastMessage,
+                            onTap: () => _openConversation(convo),
+                            theme: theme,
+                            hasUnread: convo.unreadCount > 0,
+                          );
+                        },
+                      );
+                    },
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -276,6 +420,10 @@ class _HomeScreenState extends State<HomeScreen> {
         onDestinationSelected: (i) {
           if (i == 1) {
             _openMessages();
+            return;
+          }
+          if (i == 2) {
+            _openEditProfile();
             return;
           }
           setState(() => _currentIndex = i);
@@ -424,6 +572,102 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 onPressed: onTap,
                 tooltip: 'Message',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _conversationChip({
+    required String initials,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    required ThemeData theme,
+    required bool hasUnread,
+  }) {
+    return Material(
+      color: theme.cardColor,
+      borderRadius: BorderRadius.circular(14),
+      elevation: 1,
+      shadowColor: theme.shadowColor.withAlpha(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          width: 190,
+          padding: const EdgeInsets.all(12),
+          decoration: hasUnread 
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.red, width: 2),
+                )
+              : null,
+          child: Row(
+            children: [
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: theme.colorScheme.primary.withAlpha(50),
+                    child: Text(
+                      initials,
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (hasUnread)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withAlpha(153),
+                        fontSize: 12.5,
+                        fontStyle: subtitle == 'No messages yet' ? FontStyle.italic : FontStyle.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: theme.colorScheme.onSurface.withAlpha(100),
               ),
             ],
           ),
