@@ -83,3 +83,9 @@ linux/cmake-build-*/
 
 # Environment-specific
 .env
+
+# Claude Code generated files
+CLAUDE.md
+.claude/
+claude-*.log
+claude_*.log
