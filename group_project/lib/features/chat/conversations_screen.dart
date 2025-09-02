@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'models/conversation_preview.dart';
 import 'chat_service.dart';
 import 'chat_screen.dart';
@@ -13,6 +14,7 @@ class ConversationsScreen extends StatefulWidget {
 
 class _ConversationsScreenState extends State<ConversationsScreen> {
   final ChatService _chatService = ChatService();
+  final Map<String, String> _userNamesCache = {};
 
   @override
   void initState() {
@@ -77,11 +79,26 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     }
   }
 
-  void _startNewConversation() {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Start new conversation tapped')),
-    );
+
+  Future<String> _getUserName(String userId) async {
+    if (_userNamesCache.containsKey(userId)) {
+      return _userNamesCache[userId]!;
+    }
+
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      final userData = userDoc.data();
+      final name = userData?['name']?.toString() ?? userId;
+      _userNamesCache[userId] = name;
+      return name;
+    } catch (e) {
+      _userNamesCache[userId] = userId;
+      return userId;
+    }
   }
 
   @override
@@ -172,57 +189,64 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                   }
                   return false;
                 },
-                child: ListTile(
-                  leading: ProfileAvatar(
-                    displayName: chatPartnerId,
-                    // imageUrl: null, // If you have a photo URL, pass it here
-                  ),
-                  title: Text('Chat with $chatPartnerId'),
-                  subtitle: Text(
-                    (convo.status == 'deleted' || convo.lastMessage.isEmpty)
-                        ? 'message was deleted'
-                        : convo.lastMessage,
-                    style: TextStyle(
-                      fontStyle: (convo.status == 'deleted' || convo.lastMessage == 'message was deleted' || convo.lastMessage.isEmpty)
-                          ? FontStyle.italic
-                          : FontStyle.normal,
-                      color: (convo.status == 'deleted' || convo.lastMessage == 'message was deleted' || convo.lastMessage.isEmpty)
-                          ? Colors.grey[600]
-                          : null,
-                    ),
-                  ),
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _formatTimestamp(convo.lastMessageTime),
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                child: FutureBuilder<String>(
+                  future: _getUserName(chatPartnerId),
+                  builder: (context, userNameSnapshot) {
+                    final userName = userNameSnapshot.data ?? chatPartnerId;
+                    
+                    return ListTile(
+                      leading: ProfileAvatar(
+                        displayName: userName,
+                        // imageUrl: null, // If you have a photo URL, pass it here
                       ),
-                      if (convo.unreadCount > 0)
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${convo.unreadCount}',
-                            style: const TextStyle(color: Colors.white, fontSize: 12),
-                          ),
-                        ),
-                    ],
-                  ),
-                  onTap: () {
-                    if (!mounted) return;
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChatScreen(
-                          conversationId: convo.id,
-                          isArchived: false,
+                      title: Text('Chat with $userName'),
+                      subtitle: Text(
+                        (convo.status == 'deleted' || convo.lastMessage.isEmpty)
+                            ? 'message was deleted'
+                            : convo.lastMessage,
+                        style: TextStyle(
+                          fontStyle: (convo.status == 'deleted' || convo.lastMessage == 'message was deleted' || convo.lastMessage.isEmpty)
+                              ? FontStyle.italic
+                              : FontStyle.normal,
+                          color: (convo.status == 'deleted' || convo.lastMessage == 'message was deleted' || convo.lastMessage.isEmpty)
+                              ? Colors.grey[600]
+                              : null,
                         ),
                       ),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _formatTimestamp(convo.lastMessageTime),
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          if (convo.unreadCount > 0)
+                            Container(
+                              margin: const EdgeInsets.only(top: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '${convo.unreadCount}',
+                                style: const TextStyle(color: Colors.white, fontSize: 12),
+                              ),
+                            ),
+                        ],
+                      ),
+                      onTap: () {
+                        if (!mounted) return;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ChatScreen(
+                              conversationId: convo.id,
+                              isArchived: false,
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),
@@ -230,11 +254,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
             },
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _startNewConversation,
-        tooltip: 'Start New Conversation',
-        child: const Icon(Icons.add),
       ),
     );
   }

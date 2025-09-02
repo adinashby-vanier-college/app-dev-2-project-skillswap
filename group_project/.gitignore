@@ -89,3 +89,7 @@ CLAUDE.md
 .claude/
 claude-*.log
 claude_*.log
+
+# Mock data scripts (development only)
+scripts/
+*.bat
