@@ -4,9 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui' as ui;
-import 'dart:typed_data';
 import 'package:flutter/services.dart';
-import 'package:flutter/rendering.dart';
 import '../profile/view_profile_screen.dart';
 
 class MapScreen extends StatefulWidget {

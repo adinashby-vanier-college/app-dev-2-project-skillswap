@@ -473,8 +473,8 @@ class SettingsScreen extends StatelessWidget {
 
   Future<void> _openAppStore() async {
     // In a real app, these would be your actual app store URLs
-    const androidUrl = 'https://play.google.com/store/apps/details?id=com.skillswap.app';
-    const iosUrl = 'https://apps.apple.com/app/skillswap/id123456789';
+    // const androidUrl = 'https://play.google.com/store/apps/details?id=com.skillswap.app';
+    // const iosUrl = 'https://apps.apple.com/app/skillswap/id123456789';
     
     try {
       // Try to launch the appropriate URL based on platform
