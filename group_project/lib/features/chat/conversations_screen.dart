@@ -4,6 +4,7 @@ import 'models/conversation_preview.dart';
 import 'chat_service.dart';
 import 'chat_screen.dart';
 import '../../../widgets/profile_avatar.dart';
+import '../profile/view_profile_screen.dart';
 
 class ConversationsScreen extends StatefulWidget {
   const ConversationsScreen({super.key});
@@ -207,9 +208,28 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                     final userName = userNameSnapshot.data ?? chatPartnerId;
                     
                     return ListTile(
-                      leading: ProfileAvatar(
-                        displayName: userName,
-                        // imageUrl: null, // If you have a photo URL, pass it here
+                      leading: GestureDetector(
+                        onTap: () {
+                          // Handle mock users - they don't have profiles in Firestore
+                          final mockUsers = ['Alice', 'Bob', 'Carol', 'Dave', 'Eve', 'Frank', 'Grace', 'Hank'];
+                          if (mockUsers.contains(chatPartnerId)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('$userName is a mock user - no profile available')),
+                            );
+                            return;
+                          }
+                          
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ViewProfileScreen(userId: chatPartnerId),
+                            ),
+                          );
+                        },
+                        child: ProfileAvatar(
+                          displayName: userName,
+                          // imageUrl: null, // If you have a photo URL, pass it here
+                        ),
                       ),
                       title: Text('Chat with $userName'),
                       subtitle: Text(

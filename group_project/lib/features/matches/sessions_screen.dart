@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'session_detail_screen.dart';
 
 class SessionsScreen extends StatelessWidget {
@@ -11,194 +12,130 @@ class SessionsScreen extends StatelessWidget {
     required this.matchName,
   });
 
-  // Mock sessions data based on matchId
-  List<Map<String, dynamic>> _getMockSessions(String matchId) {
-    final Map<String, List<Map<String, dynamic>>> sessionsByMatch = {
-      'match1': [ // Alice
-        {
-          'id': 'session1_1',
-          'title': 'Guitar Basics Introduction',
-          'date': '2023-12-05',
-          'time': '14:30',
-          'duration': '2 hours',
-          'location': 'Coffee Corner, Main St',
-          'skills': ['Guitar Chords', 'Basic Strumming'],
-          'status': 'completed',
-          'notes': 'Great first session! Alice taught me basic chords (G, C, D). I helped her with piano scales.',
-          'rating': 5,
-          'type': 'in-person',
-        },
-        {
-          'id': 'session1_2', 
-          'title': 'Chord Progressions & Piano Techniques',
-          'date': '2023-12-12',
-          'time': '15:00',
-          'duration': '2.5 hours',
-          'location': 'Alice\'s Home Studio',
-          'skills': ['Chord Progressions', 'Piano Dynamics'],
-          'status': 'completed',
-          'notes': 'Learned common progressions (vi-IV-I-V). Alice improved her pedal technique on piano.',
-          'rating': 5,
-          'type': 'in-person',
-        },
-        {
-          'id': 'session1_3',
-          'title': 'Song Practice Session',
-          'date': '2024-01-08',
-          'time': '16:00', 
-          'duration': '3 hours',
-          'location': 'Music Room, Community Center',
-          'skills': ['Song Performance', 'Rhythm Coordination'],
-          'status': 'completed',
-          'notes': 'Practiced "Wonderwall" together. Great progress on both instruments!',
-          'rating': 4,
-          'type': 'in-person',
-        },
-        {
-          'id': 'session1_4',
-          'title': 'Advanced Techniques',
-          'date': '2024-01-15',
-          'time': '14:00',
-          'duration': '2 hours',
-          'location': 'Online (Zoom)',
-          'skills': ['Fingerpicking', 'Advanced Piano Chords'],
-          'status': 'completed',
-          'notes': 'Virtual session worked well. Focused on more complex techniques.',
-          'rating': 4,
-          'type': 'virtual',
-        },
-      ],
-      'match2': [ // Bob
-        {
-          'id': 'session2_1',
-          'title': 'Python Fundamentals',
-          'date': '2023-11-18',
-          'time': '19:00',
-          'duration': '2 hours',
-          'location': 'Central Library, Study Room B',
-          'skills': ['Python Basics', 'JavaScript ES6'],
-          'status': 'completed',
-          'notes': 'Bob explained Python data structures. I showed him modern JavaScript features.',
-          'rating': 5,
-          'type': 'in-person',
-        },
-        {
-          'id': 'session2_2',
-          'title': 'Web Development Deep Dive',
-          'date': '2023-11-25',
-          'time': '18:30',
-          'duration': '3 hours',
-          'location': 'Bob\'s Office',
-          'skills': ['Django Framework', 'React Hooks'],
-          'status': 'completed',
-          'notes': 'Hands-on coding session. Built small projects together.',
-          'rating': 5,
-          'type': 'in-person',
-        },
-        {
-          'id': 'session2_3',
-          'title': 'API Development Workshop',
-          'date': '2023-12-15',
-          'time': '20:00',
-          'duration': '2.5 hours',
-          'location': 'Online (Discord)',
-          'skills': ['REST APIs', 'Database Integration'],
-          'status': 'completed',
-          'notes': 'Virtual coding session. Screen sharing made it easy to collaborate.',
-          'rating': 4,
-          'type': 'virtual',
-        },
-        {
-          'id': 'session2_4',
-          'title': 'Advanced Debugging Techniques',
-          'date': '2024-01-05',
-          'time': '19:30',
-          'duration': '2 hours',
-          'location': 'TechHub Coworking Space',
-          'skills': ['Python Debugging', 'Chrome DevTools'],
-          'status': 'completed',
-          'notes': 'Learned professional debugging workflows. Very practical session.',
-          'rating': 5,
-          'type': 'in-person',
-        },
-        {
-          'id': 'session2_5',
-          'title': 'Code Review & Best Practices',
-          'date': '2024-01-10',
-          'time': '18:00',
-          'duration': '2 hours',
-          'location': 'Coffee Bean Cafe',
-          'skills': ['Code Quality', 'Git Workflows'],
-          'status': 'completed',
-          'notes': 'Reviewed each other\'s projects. Great feedback and learning experience.',
-          'rating': 5,
-          'type': 'in-person',
-        },
-        {
-          'id': 'session2_6',
-          'title': 'Machine Learning Introduction',
-          'date': '2024-01-18',
-          'time': '19:00',
-          'duration': '2.5 hours',
-          'location': 'Online (Google Meet)',
-          'skills': ['Scikit-learn', 'Data Visualization'],
-          'status': 'scheduled',
-          'notes': '',
-          'rating': 0,
-          'type': 'virtual',
-        },
-      ],
-      'match3': [ // Carol - completed match
-        {
-          'id': 'session3_1',
-          'title': 'Calligraphy Basics',
-          'date': '2023-10-15',
-          'time': '10:00',
-          'duration': '2 hours',
-          'location': 'Art Studio Downtown',
-          'skills': ['Basic Strokes', 'Typography Principles'],
-          'status': 'completed',
-          'notes': 'Beautiful introduction to calligraphy. Carol is a natural teacher.',
-          'rating': 5,
-          'type': 'in-person',
-        },
-        {
-          'id': 'session3_2',
-          'title': 'Advanced Lettering',
-          'date': '2023-11-10',
-          'time': '14:00',
-          'duration': '3 hours',
-          'location': 'Carol\'s Art Room',
-          'skills': ['Modern Calligraphy', 'Digital Typography'],
-          'status': 'completed',
-          'notes': 'Combined traditional and digital techniques. Amazing progress made.',
-          'rating': 5,
-          'type': 'in-person',
-        },
-        {
-          'id': 'session3_3',
-          'title': 'Final Project Presentation',
-          'date': '2023-12-20',
-          'time': '16:00',
-          'duration': '2 hours',
-          'location': 'Community Art Gallery',
-          'skills': ['Project Showcase', 'Peer Review'],
-          'status': 'completed',
-          'notes': 'Showcased our final pieces. Both learned so much throughout this exchange!',
-          'rating': 5,
-          'type': 'in-person',
-        },
-      ],
-    };
+  Future<List<Map<String, dynamic>>> _generateMockSessions(String userId, String userName) async {
+    try {
+      // Get user data to generate relevant session content
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      final userData = userDoc.data();
+      
+      if (userData == null) {
+        return [];
+      }
 
-    return sessionsByMatch[matchId] ?? [];
+      // Extract user's skills to generate realistic session content
+      final skillsHave = userData['skillsHave'] is List 
+          ? List<String>.from(userData['skillsHave'] ?? [])
+          : userData['skillsHave'] is String 
+              ? [userData['skillsHave']] 
+              : <String>[];
+      
+      final skillsWant = userData['skillsWant'] is List 
+          ? List<String>.from(userData['skillsWant'] ?? [])
+          : userData['skillsWant'] is String 
+              ? [userData['skillsWant']] 
+              : <String>[];
+
+      // Generate sessions based on user data
+      final List<Map<String, dynamic>> sessions = [];
+      final statuses = ['completed', 'completed', 'completed', 'scheduled'];
+      final locations = [
+        'Coffee Corner, Main St',
+        '$userName\'s Home',
+        'Community Center',
+        'Online (Zoom)',
+        'Central Library',
+        'Local Park Pavilion',
+      ];
+      final times = ['14:30', '15:00', '16:00', '19:00', '18:30', '10:00'];
+      final durations = ['2 hours', '2.5 hours', '3 hours', '1.5 hours'];
+      
+      // Create 3-5 sessions
+      final sessionCount = 3 + (userId.hashCode.abs() % 3);
+      
+      for (int i = 0; i < sessionCount; i++) {
+        final sessionSkills = <String>[];
+        
+        // Add some of their offered skills
+        if (skillsHave.isNotEmpty) {
+          sessionSkills.add(skillsHave[i % skillsHave.length]);
+        }
+        
+        // Add some skills they want to learn
+        if (skillsWant.isNotEmpty && sessionSkills.length < 2) {
+          sessionSkills.add(skillsWant[i % skillsWant.length]);
+        }
+        
+        // Fallback skills if no skills in profile
+        if (sessionSkills.isEmpty) {
+          final fallbackSkills = ['General Discussion', 'Knowledge Exchange', 'Practice Session'];
+          sessionSkills.add(fallbackSkills[i % fallbackSkills.length]);
+        }
+        
+        final isVirtual = (i == 1 || i == 3); // Make some sessions virtual
+        final status = i < sessionCount - 1 ? 'completed' : statuses[i % statuses.length];
+        
+        // Generate session date (going backwards from recent)
+        final daysAgo = 10 + (i * 15) + (userId.hashCode.abs() % 10);
+        final sessionDate = DateTime.now().subtract(Duration(days: daysAgo));
+        
+        sessions.add({
+          'id': 'session_${userId}_$i',
+          'title': _generateSessionTitle(sessionSkills, i + 1),
+          'date': sessionDate.toIso8601String().split('T')[0],
+          'time': times[i % times.length],
+          'duration': durations[i % durations.length],
+          'location': isVirtual ? 'Online (${["Zoom", "Google Meet", "Discord"][i % 3]})' : locations[i % locations.length],
+          'skills': sessionSkills,
+          'status': status,
+          'notes': status == 'completed' ? _generateNotes(userName, sessionSkills, i + 1) : '',
+          'rating': status == 'completed' ? (4 + (i % 2)) : 0,
+          'type': isVirtual ? 'virtual' : 'in-person',
+        });
+      }
+      
+      // Sort by date (most recent first)
+      sessions.sort((a, b) => b['date'].compareTo(a['date']));
+      
+      return sessions;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  String _generateSessionTitle(List<String> skills, int sessionNumber) {
+    if (skills.isEmpty) return 'Session $sessionNumber';
+    
+    final titlePrefixes = [
+      'Introduction to',
+      'Deep Dive into',
+      'Advanced',
+      'Practical',
+      'Hands-on',
+      'Workshop on',
+    ];
+    
+    final prefix = titlePrefixes[(sessionNumber - 1) % titlePrefixes.length];
+    final mainSkill = skills.first;
+    
+    return '$prefix $mainSkill';
+  }
+
+  String _generateNotes(String userName, List<String> skills, int sessionNumber) {
+    final noteTemplates = [
+      'Great session with $userName! Made excellent progress with ${skills.join(" and ")}.',
+      'Really enjoyed working with $userName on ${skills.join(" and ")}. Very knowledgeable!',
+      '$userName is an amazing teacher! Learned so much about ${skills.join(" and ")}.',
+      'Productive session focused on ${skills.join(" and ")}. Both of us improved significantly.',
+      'Fantastic exchange with $userName. The skills sharing in ${skills.join(" and ")} was very effective.',
+    ];
+    
+    return noteTemplates[(sessionNumber - 1) % noteTemplates.length];
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final sessions = _getMockSessions(matchId);
 
     return Scaffold(
       appBar: AppBar(
@@ -206,33 +143,55 @@ class SessionsScreen extends StatelessWidget {
         backgroundColor: theme.cardColor,
         elevation: 0.5,
       ),
-      body: sessions.isEmpty
-          ? _buildEmptyState(context, theme)
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Skill exchange sessions',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: colorScheme.onSurface.withAlpha(153),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: sessions.length,
-                      itemBuilder: (context, index) {
-                        final session = sessions[index];
-                        return _buildSessionCard(context, session, theme);
-                      },
-                    ),
-                  ),
-                ],
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _generateMockSessions(matchId, matchName),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                'Error loading sessions: ${snapshot.error}',
+                style: TextStyle(color: colorScheme.error),
               ),
+            );
+          }
+          
+          final sessions = snapshot.data ?? [];
+          
+          if (sessions.isEmpty) {
+            return _buildEmptyState(context, theme);
+          }
+          
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Skill exchange sessions',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: colorScheme.onSurface.withAlpha(153),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: sessions.length,
+                    itemBuilder: (context, index) {
+                      final session = sessions[index];
+                      return _buildSessionCard(context, session, theme);
+                    },
+                  ),
+                ),
+              ],
             ),
+          );
+        },
+      ),
     );
   }
 

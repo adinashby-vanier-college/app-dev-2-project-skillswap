@@ -1,72 +1,64 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'sessions_screen.dart';
+import '../profile/view_profile_screen.dart';
 
 class MatchHistoryScreen extends StatelessWidget {
   const MatchHistoryScreen({super.key});
 
-  // Mock data based on existing conversation users
-  static final List<Map<String, dynamic>> _mockMatches = [
-    {
-      'id': 'match1',
-      'name': 'Alice',
-      'avatar': 'A',
-      'skillsExchanged': ['Guitar', 'Piano'],
-      'totalSessions': 4,
-      'lastSessionDate': '2024-01-15',
-      'status': 'active',
-      'matchDate': '2023-12-01',
-    },
-    {
-      'id': 'match2', 
-      'name': 'Bob',
-      'avatar': 'B',
-      'skillsExchanged': ['Python', 'JavaScript'],
-      'totalSessions': 6,
-      'lastSessionDate': '2024-01-10',
-      'status': 'active',
-      'matchDate': '2023-11-15',
-    },
-    {
-      'id': 'match3',
-      'name': 'Carol',
-      'avatar': 'C', 
-      'skillsExchanged': ['Calligraphy', 'Typography'],
-      'totalSessions': 3,
-      'lastSessionDate': '2023-12-20',
-      'status': 'completed',
-      'matchDate': '2023-10-10',
-    },
-    {
-      'id': 'match4',
-      'name': 'Dave',
-      'avatar': 'D',
-      'skillsExchanged': ['Italian Cooking', 'Baking'],
-      'totalSessions': 5,
-      'lastSessionDate': '2024-01-08',
-      'status': 'active',
-      'matchDate': '2023-11-20',
-    },
-    {
-      'id': 'match5',
-      'name': 'Eve',
-      'avatar': 'E',
-      'skillsExchanged': ['Watercolor', 'Sketching'],
-      'totalSessions': 2,
-      'lastSessionDate': '2023-11-25',
-      'status': 'paused',
-      'matchDate': '2023-10-05',
-    },
-    {
-      'id': 'match6',
-      'name': 'Frank',
-      'avatar': 'F',
-      'skillsExchanged': ['Juggling', 'Magic Tricks'],
-      'totalSessions': 3,
-      'lastSessionDate': '2024-01-12',
-      'status': 'active',
-      'matchDate': '2023-12-10',
-    },
-  ];
+  Future<List<Map<String, dynamic>>> _loadMockMatches() async {
+    try {
+      // Get all users from Firestore
+      final snapshot = await FirebaseFirestore.instance.collection('users').limit(6).get();
+      
+      final List<Map<String, dynamic>> matches = [];
+      final statuses = ['active', 'completed', 'paused'];
+      final skillExamples = [
+        ['Guitar', 'Piano'],
+        ['Python', 'JavaScript'],
+        ['Calligraphy', 'Typography'],
+        ['Italian Cooking', 'Baking'],
+        ['Watercolor', 'Sketching'],
+        ['Juggling', 'Magic Tricks'],
+      ];
+      
+      for (int i = 0; i < snapshot.docs.length; i++) {
+        final doc = snapshot.docs[i];
+        final userData = doc.data();
+        final name = userData['name'] ?? 'Unknown User';
+        
+        matches.add({
+          'id': doc.id, // Use real Firestore document ID
+          'name': name,
+          'avatar': name.isNotEmpty ? name[0].toUpperCase() : '?',
+          'skillsExchanged': skillExamples[i % skillExamples.length],
+          'totalSessions': (i + 1) * 2 + (i % 3),
+          'lastSessionDate': _generateRandomDate(),
+          'status': statuses[i % statuses.length],
+          'matchDate': _generateRandomMatchDate(),
+        });
+      }
+      
+      return matches;
+    } catch (e) {
+      // Fallback to empty list if Firestore fails
+      return [];
+    }
+  }
+
+  String _generateRandomDate() {
+    final now = DateTime.now();
+    final daysAgo = [1, 5, 12, 20, 35, 45][DateTime.now().millisecond % 6];
+    final date = now.subtract(Duration(days: daysAgo));
+    return date.toIso8601String().split('T')[0];
+  }
+
+  String _generateRandomMatchDate() {
+    final now = DateTime.now();
+    final daysAgo = [30, 45, 60, 80, 100, 120][DateTime.now().millisecond % 6];
+    final date = now.subtract(Duration(days: daysAgo));
+    return date.toIso8601String().split('T')[0];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,11 +85,42 @@ class MatchHistoryScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: ListView.builder(
-                itemCount: _mockMatches.length,
-                itemBuilder: (context, index) {
-                  final match = _mockMatches[index];
-                  return _buildMatchCard(context, match, theme);
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: _loadMockMatches(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Error loading matches: ${snapshot.error}',
+                        style: TextStyle(color: colorScheme.error),
+                      ),
+                    );
+                  }
+                  
+                  final matches = snapshot.data ?? [];
+                  
+                  if (matches.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'No matches found. Create some users first!',
+                        style: TextStyle(
+                          color: colorScheme.onSurface.withAlpha(153),
+                        ),
+                      ),
+                    );
+                  }
+                  
+                  return ListView.builder(
+                    itemCount: matches.length,
+                    itemBuilder: (context, index) {
+                      final match = matches[index];
+                      return _buildMatchCard(context, match, theme);
+                    },
+                  );
                 },
               ),
             ),
@@ -154,16 +177,32 @@ class MatchHistoryScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              // Avatar
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: colorScheme.primary.withAlpha(50),
-                child: Text(
-                  match['avatar'],
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
+              // Avatar - clickable to view profile
+              GestureDetector(
+                onTap: () {
+                  try {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ViewProfileScreen(userId: match['id']),
+                      ),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error opening profile: $e')),
+                    );
+                  }
+                },
+                child: CircleAvatar(
+                  radius: 28,
+                  backgroundColor: colorScheme.primary.withAlpha(50),
+                  child: Text(
+                    match['avatar'],
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
+                    ),
                   ),
                 ),
               ),
