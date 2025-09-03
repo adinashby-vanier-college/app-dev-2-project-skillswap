@@ -145,7 +145,7 @@ class _SessionProposalDialogState extends State<SessionProposalDialog> {
                                   'Date *',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: colorScheme.onSurface.withAlpha(153),
+                                    color: colorScheme.onSurface.withValues(alpha: 153/255),
                                   ),
                                 ),
                                 const SizedBox(height: 6),
@@ -229,7 +229,7 @@ class _SessionProposalDialogState extends State<SessionProposalDialog> {
                             'Session Type *',
                             style: TextStyle(
                               fontSize: 12,
-                              color: colorScheme.onSurface.withAlpha(153),
+                              color: colorScheme.onSurface.withValues(alpha: 153/255),
                             ),
                           ),
                           const SizedBox(height: 4),

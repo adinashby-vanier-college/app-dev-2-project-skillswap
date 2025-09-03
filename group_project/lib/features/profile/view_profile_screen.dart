@@ -59,7 +59,7 @@ class ViewProfileScreen extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          colorScheme.primary.withAlpha(100),
+                          colorScheme.primary.withValues(alpha: 100/255),
                           colorScheme.surface,
                         ],
                       ),
@@ -90,13 +90,13 @@ class ViewProfileScreen extends StatelessWidget {
                                 Icon(
                                   Icons.location_on,
                                   size: 16,
-                                  color: colorScheme.onSurface.withAlpha(153),
+                                  color: colorScheme.onSurface.withValues(alpha: 153/255),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   location,
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: colorScheme.onSurface.withAlpha(153),
+                                    color: colorScheme.onSurface.withValues(alpha: 153/255),
                                   ),
                                 ),
                               ],
@@ -164,7 +164,7 @@ class ViewProfileScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: colorScheme.primary.withAlpha(51),
+                              color: colorScheme.primary.withValues(alpha: 51/255),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -215,20 +215,20 @@ class ViewProfileScreen extends StatelessWidget {
             Icon(
               Icons.person_off,
               size: 64,
-              color: theme.colorScheme.onSurface.withAlpha(100),
+              color: theme.colorScheme.onSurface.withValues(alpha: 100/255),
             ),
             const SizedBox(height: 16),
             Text(
               "Profile Unavailable",
               style: theme.textTheme.headlineSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withAlpha(153),
+                color: theme.colorScheme.onSurface.withValues(alpha: 153/255),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               message,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withAlpha(128),
+                color: theme.colorScheme.onSurface.withValues(alpha: 128/255),
               ),
             ),
           ],
@@ -317,7 +317,7 @@ class ViewProfileScreen extends StatelessWidget {
               Text(
                 "No skills listed",
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withAlpha(128),
+                  color: colorScheme.onSurface.withValues(alpha: 128/255),
                   fontStyle: FontStyle.italic,
                 ),
               )
@@ -337,14 +337,14 @@ class ViewProfileScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withAlpha(51),
+        color: color.withValues(alpha: 51/255),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withAlpha(128)),
+        border: Border.all(color: color.withValues(alpha: 128/255)),
       ),
       child: Text(
         skill,
         style: TextStyle(
-          color: color.withAlpha(204),
+          color: color.withValues(alpha: 204/255),
           fontSize: 13,
           fontWeight: FontWeight.w500,
         ),

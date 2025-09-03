@@ -80,7 +80,7 @@ class MatchHistoryScreen extends StatelessWidget {
               'Your skill exchange partners',
               style: TextStyle(
                 fontSize: 16,
-                color: colorScheme.onSurface.withAlpha(153),
+                color: colorScheme.onSurface.withValues(alpha: 153/255),
               ),
             ),
             const SizedBox(height: 16),
@@ -108,7 +108,7 @@ class MatchHistoryScreen extends StatelessWidget {
                       child: Text(
                         'No matches found. Create some users first!',
                         style: TextStyle(
-                          color: colorScheme.onSurface.withAlpha(153),
+                          color: colorScheme.onSurface.withValues(alpha: 153/255),
                         ),
                       ),
                     );
@@ -195,7 +195,7 @@ class MatchHistoryScreen extends StatelessWidget {
                 },
                 child: CircleAvatar(
                   radius: 28,
-                  backgroundColor: colorScheme.primary.withAlpha(50),
+                  backgroundColor: colorScheme.primary.withValues(alpha: 50/255),
                   child: Text(
                     match['avatar'],
                     style: TextStyle(
@@ -235,7 +235,7 @@ class MatchHistoryScreen extends StatelessWidget {
                       'Skills: ${match['skillsExchanged'].join(', ')}',
                       style: TextStyle(
                         fontSize: 14,
-                        color: colorScheme.onSurface.withAlpha(178),
+                        color: colorScheme.onSurface.withValues(alpha: 178/255),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -245,7 +245,7 @@ class MatchHistoryScreen extends StatelessWidget {
                           '${match['totalSessions']} sessions',
                           style: TextStyle(
                             fontSize: 13,
-                            color: colorScheme.onSurface.withAlpha(153),
+                            color: colorScheme.onSurface.withValues(alpha: 153/255),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -253,7 +253,7 @@ class MatchHistoryScreen extends StatelessWidget {
                           'Last: ${_formatDate(match['lastSessionDate'])}',
                           style: TextStyle(
                             fontSize: 13,
-                            color: colorScheme.onSurface.withAlpha(153),
+                            color: colorScheme.onSurface.withValues(alpha: 153/255),
                           ),
                         ),
                       ],
@@ -266,7 +266,7 @@ class MatchHistoryScreen extends StatelessWidget {
               Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: colorScheme.onSurface.withAlpha(100),
+                color: colorScheme.onSurface.withValues(alpha: 100/255),
               ),
             ],
           ),

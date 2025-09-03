@@ -87,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
               width: 34,
               margin: const EdgeInsets.only(right: 12),
               decoration: BoxDecoration(
-                color: colorScheme.primary.withAlpha(25),
+                color: colorScheme.primary.withValues(alpha: 25/255),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Center(child: FlutterLogo(size: 20)),
@@ -185,20 +185,23 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: colorScheme.primary.withAlpha(50),
-                  backgroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
-                  child: photo.isEmpty
-                      ? Text(
-                    initialTop,
-                    style: TextStyle(
-                      color: colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  )
-                      : null,
+                GestureDetector(
+                  onTap: _openEditProfile,
+                  child: CircleAvatar(
+                    radius: 24,
+                    backgroundColor: colorScheme.primary.withValues(alpha: 50/255),
+                    backgroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
+                    child: photo.isEmpty
+                        ? Text(
+                      initialTop,
+                      style: TextStyle(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    )
+                        : null,
+                  ),
                 ),
                 const SizedBox(width: 12),
 
@@ -221,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: colorScheme.onSurface.withAlpha(153),
+                          color: colorScheme.onSurface.withValues(alpha: 153/255),
                           fontSize: 12.5,
                         ),
                       ),
@@ -236,8 +239,8 @@ class _HomeScreenState extends State<HomeScreen> {
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
                 hintText: 'Search any skill or person…',
-                hintStyle: TextStyle(color: colorScheme.onSurface.withAlpha(128)),
-                prefixIcon: Icon(Icons.search, color: colorScheme.onSurface.withAlpha(153)),
+                hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 128/255)),
+                prefixIcon: Icon(Icons.search, color: colorScheme.onSurface.withValues(alpha: 153/255)),
                 suffixIcon: IconButton(
                   icon: Icon(Icons.send, color: colorScheme.primary),
                   onPressed: () => _performSearch(_searchCtrl.text),
@@ -444,7 +447,7 @@ class _HomeScreenState extends State<HomeScreen> {
           colors: isDark 
               ? [
                   theme.cardColor,
-                  theme.cardColor.withAlpha(200),
+                  theme.cardColor.withValues(alpha: 200/255),
                 ]
               : [
                   Colors.white,
@@ -453,15 +456,15 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withAlpha(30),
+            color: color.withValues(alpha: 30/255),
             blurRadius: 20,
             offset: const Offset(0, 8),
             spreadRadius: -5,
           ),
           BoxShadow(
             color: isDark 
-                ? Colors.black.withAlpha(40)
-                : Colors.grey.shade300.withAlpha(100),
+                ? Colors.black.withValues(alpha: 40/255)
+                : Colors.grey.shade300.withValues(alpha: 100/255),
             blurRadius: 15,
             offset: const Offset(0, 4),
             spreadRadius: -8,
@@ -469,8 +472,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         border: Border.all(
           color: isDark 
-              ? Colors.white.withAlpha(20)
-              : color.withAlpha(40),
+              ? Colors.white.withValues(alpha: 20/255)
+              : color.withValues(alpha: 40/255),
           width: 1,
         ),
       ),
@@ -480,8 +483,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: onTap,
-          highlightColor: color.withAlpha(20),
-          splashColor: color.withAlpha(30),
+          highlightColor: color.withValues(alpha: 20/255),
+          splashColor: color.withValues(alpha: 30/255),
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -495,14 +498,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        color.withAlpha(120),
-                        color.withAlpha(80),
+                        color.withValues(alpha: 120/255),
+                        color.withValues(alpha: 80/255),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: color.withAlpha(60),
+                        color: color.withValues(alpha: 60/255),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                         spreadRadius: -2,
@@ -535,7 +538,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     gradient: LinearGradient(
                       colors: [
                         color,
-                        color.withAlpha(100),
+                        color.withValues(alpha: 100/255),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(2),
@@ -568,7 +571,7 @@ class _HomeScreenState extends State<HomeScreen> {
           colors: isDark 
               ? [
                   theme.cardColor,
-                  theme.cardColor.withAlpha(200),
+                  theme.cardColor.withValues(alpha: 200/255),
                 ]
               : [
                   Colors.white,
@@ -577,15 +580,15 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withAlpha(30),
+            color: color.withValues(alpha: 30/255),
             blurRadius: 20,
             offset: const Offset(0, 8),
             spreadRadius: -5,
           ),
           BoxShadow(
             color: isDark 
-                ? Colors.black.withAlpha(40)
-                : Colors.grey.shade300.withAlpha(100),
+                ? Colors.black.withValues(alpha: 40/255)
+                : Colors.grey.shade300.withValues(alpha: 100/255),
             blurRadius: 15,
             offset: const Offset(0, 4),
             spreadRadius: -8,
@@ -593,8 +596,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         border: Border.all(
           color: isDark 
-              ? Colors.white.withAlpha(20)
-              : color.withAlpha(40),
+              ? Colors.white.withValues(alpha: 20/255)
+              : color.withValues(alpha: 40/255),
           width: 1,
         ),
       ),
@@ -604,8 +607,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: onTap,
-          highlightColor: color.withAlpha(20),
-          splashColor: color.withAlpha(30),
+          highlightColor: color.withValues(alpha: 20/255),
+          splashColor: color.withValues(alpha: 30/255),
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -621,14 +624,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            color.withAlpha(120),
-                            color.withAlpha(80),
+                            color.withValues(alpha: 120/255),
+                            color.withValues(alpha: 80/255),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: color.withAlpha(60),
+                            color: color.withValues(alpha: 60/255),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                             spreadRadius: -2,
@@ -688,7 +691,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     gradient: LinearGradient(
                       colors: [
                         color,
-                        color.withAlpha(100),
+                        color.withValues(alpha: 100/255),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(2),

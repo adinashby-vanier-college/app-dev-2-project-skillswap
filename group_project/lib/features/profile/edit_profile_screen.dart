@@ -377,9 +377,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               textInputAction: TextInputAction.next,
                               style: TextStyle(color: colorScheme.onSurface),
                               decoration: InputDecoration(
-                                prefixIcon: Icon(Icons.person_outline, color: colorScheme.onSurface.withAlpha(153)),
+                                prefixIcon: Icon(Icons.person_outline, color: colorScheme.onSurface.withValues(alpha: 153/255)),
                                 hintText: 'Your full name',
-                                hintStyle: TextStyle(color: colorScheme.onSurface.withAlpha(128)),
+                                hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 128/255)),
                               ),
                               validator: (v) {
                                 final t = v?.trim() ?? '';
@@ -402,11 +402,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             child: TextFormField(
                               controller: _emailCtrl,
                               readOnly: true,
-                              style: TextStyle(color: colorScheme.onSurface.withAlpha(153)),
+                              style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 153/255)),
                               decoration: InputDecoration(
-                                prefixIcon: Icon(Icons.email_outlined, color: colorScheme.onSurface.withAlpha(153)),
+                                prefixIcon: Icon(Icons.email_outlined, color: colorScheme.onSurface.withValues(alpha: 153/255)),
                                 hintText: 'Email',
-                                hintStyle: TextStyle(color: colorScheme.onSurface.withAlpha(128)),
+                                hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 128/255)),
                               ),
                             ),
                           ),
@@ -420,9 +420,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               textInputAction: TextInputAction.next,
                               style: TextStyle(color: colorScheme.onSurface),
                               decoration: InputDecoration(
-                                prefixIcon: Icon(Icons.location_on_outlined, color: colorScheme.onSurface.withAlpha(153)),
+                                prefixIcon: Icon(Icons.location_on_outlined, color: colorScheme.onSurface.withValues(alpha: 153/255)),
                                 hintText: 'City, Country',
-                                hintStyle: TextStyle(color: colorScheme.onSurface.withAlpha(128)),
+                                hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 128/255)),
                               ),
                               maxLength: 80,
                               buildCounter: (
@@ -445,9 +445,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               maxLines: 4,
                               style: TextStyle(color: colorScheme.onSurface),
                               decoration: InputDecoration(
-                                prefixIcon: Icon(Icons.info_outline, color: colorScheme.onSurface.withAlpha(153)),
+                                prefixIcon: Icon(Icons.info_outline, color: colorScheme.onSurface.withValues(alpha: 153/255)),
                                 hintText: 'Tell people about yourself',
-                                hintStyle: TextStyle(color: colorScheme.onSurface.withAlpha(128)),
+                                hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 128/255)),
                                 alignLabelWithHint: true,
                               ),
                               validator: (v) {
@@ -573,7 +573,7 @@ class _Avatar extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withAlpha(46),
+            color: theme.colorScheme.primary.withValues(alpha: 46/255),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),

@@ -58,12 +58,12 @@ class SessionProposalWidget extends StatelessWidget {
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: statusColor.withAlpha(100),
+          color: statusColor.withValues(alpha: 100/255),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor.withAlpha(20),
+            color: theme.shadowColor.withValues(alpha: 20/255),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -93,7 +93,7 @@ class SessionProposalWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusColor.withAlpha(51),
+                  color: statusColor.withValues(alpha: 51/255),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -129,7 +129,7 @@ class SessionProposalWidget extends StatelessWidget {
             'Skills: ${proposal.skills.join(', ')}',
             style: TextStyle(
               fontSize: 14,
-              color: colorScheme.onSurface.withAlpha(178),
+              color: colorScheme.onSurface.withValues(alpha: 178/255),
             ),
           ),
           const SizedBox(height: 12),
@@ -137,33 +137,33 @@ class SessionProposalWidget extends StatelessWidget {
           // Date and Time
           Row(
             children: [
-              Icon(Icons.calendar_today, size: 16, color: colorScheme.onSurface.withAlpha(153)),
+              Icon(Icons.calendar_today, size: 16, color: colorScheme.onSurface.withValues(alpha: 153/255)),
               const SizedBox(width: 6),
               Text(
                 _formatDate(proposal.proposedDate),
                 style: TextStyle(
                   fontSize: 13,
-                  color: colorScheme.onSurface.withAlpha(178),
+                  color: colorScheme.onSurface.withValues(alpha: 178/255),
                 ),
               ),
               const SizedBox(width: 16),
-              Icon(Icons.access_time, size: 16, color: colorScheme.onSurface.withAlpha(153)),
+              Icon(Icons.access_time, size: 16, color: colorScheme.onSurface.withValues(alpha: 153/255)),
               const SizedBox(width: 6),
               Text(
                 proposal.proposedTime,
                 style: TextStyle(
                   fontSize: 13,
-                  color: colorScheme.onSurface.withAlpha(178),
+                  color: colorScheme.onSurface.withValues(alpha: 178/255),
                 ),
               ),
               const SizedBox(width: 16),
-              Icon(Icons.timer, size: 16, color: colorScheme.onSurface.withAlpha(153)),
+              Icon(Icons.timer, size: 16, color: colorScheme.onSurface.withValues(alpha: 153/255)),
               const SizedBox(width: 6),
               Text(
                 proposal.duration,
                 style: TextStyle(
                   fontSize: 13,
-                  color: colorScheme.onSurface.withAlpha(178),
+                  color: colorScheme.onSurface.withValues(alpha: 178/255),
                 ),
               ),
             ],
@@ -176,7 +176,7 @@ class SessionProposalWidget extends StatelessWidget {
               Icon(
                 isVirtual ? Icons.videocam : Icons.location_on,
                 size: 16,
-                color: colorScheme.onSurface.withAlpha(153),
+                color: colorScheme.onSurface.withValues(alpha: 153/255),
               ),
               const SizedBox(width: 6),
               Expanded(
@@ -184,7 +184,7 @@ class SessionProposalWidget extends StatelessWidget {
                   proposal.location,
                   style: TextStyle(
                     fontSize: 13,
-                    color: colorScheme.onSurface.withAlpha(178),
+                    color: colorScheme.onSurface.withValues(alpha: 178/255),
                   ),
                 ),
               ),
@@ -192,7 +192,7 @@ class SessionProposalWidget extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withAlpha(51),
+                    color: Colors.blue.withValues(alpha: 51/255),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -221,7 +221,7 @@ class SessionProposalWidget extends StatelessWidget {
                 proposal.notes!,
                 style: TextStyle(
                   fontSize: 12,
-                  color: colorScheme.onSurface.withAlpha(153),
+                  color: colorScheme.onSurface.withValues(alpha: 153/255),
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -286,7 +286,7 @@ class SessionProposalWidget extends StatelessWidget {
             'Proposed ${_formatTimestamp(proposal.createdAt)}',
             style: TextStyle(
               fontSize: 11,
-              color: colorScheme.onSurface.withAlpha(128),
+              color: colorScheme.onSurface.withValues(alpha: 128/255),
             ),
           ),
         ],

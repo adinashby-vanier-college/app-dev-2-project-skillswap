@@ -174,7 +174,7 @@ class SessionsScreen extends StatelessWidget {
                   'Skill exchange sessions',
                   style: TextStyle(
                     fontSize: 16,
-                    color: colorScheme.onSurface.withAlpha(153),
+                    color: colorScheme.onSurface.withValues(alpha: 153/255),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -203,21 +203,21 @@ class SessionsScreen extends StatelessWidget {
           Icon(
             Icons.event_busy,
             size: 64,
-            color: theme.colorScheme.onSurface.withAlpha(100),
+            color: theme.colorScheme.onSurface.withValues(alpha: 100/255),
           ),
           const SizedBox(height: 16),
           Text(
             'No sessions yet',
             style: TextStyle(
               fontSize: 18,
-              color: theme.colorScheme.onSurface.withAlpha(153),
+              color: theme.colorScheme.onSurface.withValues(alpha: 153/255),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Schedule your first session with $matchName',
             style: TextStyle(
-              color: theme.colorScheme.onSurface.withAlpha(128),
+              color: theme.colorScheme.onSurface.withValues(alpha: 128/255),
             ),
           ),
         ],
@@ -299,26 +299,26 @@ class SessionsScreen extends StatelessWidget {
                   Icon(
                     Icons.calendar_today,
                     size: 16,
-                    color: colorScheme.onSurface.withAlpha(153),
+                    color: colorScheme.onSurface.withValues(alpha: 153/255),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     '${_formatDate(session['date'])} at ${session['time']}',
                     style: TextStyle(
-                      color: colorScheme.onSurface.withAlpha(178),
+                      color: colorScheme.onSurface.withValues(alpha: 178/255),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Icon(
                     Icons.access_time,
                     size: 16,
-                    color: colorScheme.onSurface.withAlpha(153),
+                    color: colorScheme.onSurface.withValues(alpha: 153/255),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     session['duration'],
                     style: TextStyle(
-                      color: colorScheme.onSurface.withAlpha(178),
+                      color: colorScheme.onSurface.withValues(alpha: 178/255),
                     ),
                   ),
                 ],
@@ -331,14 +331,14 @@ class SessionsScreen extends StatelessWidget {
                   Icon(
                     isVirtual ? Icons.videocam : Icons.location_on,
                     size: 16,
-                    color: colorScheme.onSurface.withAlpha(153),
+                    color: colorScheme.onSurface.withValues(alpha: 153/255),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       session['location'],
                       style: TextStyle(
-                        color: colorScheme.onSurface.withAlpha(178),
+                        color: colorScheme.onSurface.withValues(alpha: 178/255),
                       ),
                     ),
                   ),
@@ -346,7 +346,7 @@ class SessionsScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withAlpha(51),
+                        color: Colors.blue.withValues(alpha: 51/255),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -367,7 +367,7 @@ class SessionsScreen extends StatelessWidget {
                 'Skills: ${_formatSkills(session['skills'])}',
                 style: TextStyle(
                   fontSize: 13,
-                  color: colorScheme.onSurface.withAlpha(153),
+                  color: colorScheme.onSurface.withValues(alpha: 153/255),
                 ),
               ),
               
@@ -388,7 +388,7 @@ class SessionsScreen extends StatelessWidget {
                       '${session['rating']}/5',
                       style: TextStyle(
                         fontSize: 12,
-                        color: colorScheme.onSurface.withAlpha(153),
+                        color: colorScheme.onSurface.withValues(alpha: 153/255),
                       ),
                     ),
                   ],

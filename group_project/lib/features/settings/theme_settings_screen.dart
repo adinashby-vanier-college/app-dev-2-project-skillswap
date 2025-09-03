@@ -36,7 +36,7 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: theme.shadowColor.withAlpha(theme.brightness == Brightness.dark ? 20 : 10),
+                      color: theme.shadowColor.withValues(alpha: (theme.brightness == Brightness.dark ? 20 : 10)/255),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -125,7 +125,7 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
               color: isSelected ? colorScheme.primary : colorScheme.outline,
               width: isSelected ? 2 : 1,
             ),
-            color: isSelected ? colorScheme.primary.withAlpha(25) : Colors.transparent,
+            color: isSelected ? colorScheme.primary.withValues(alpha: 25/255) : Colors.transparent,
           ),
           child: Row(
             children: [

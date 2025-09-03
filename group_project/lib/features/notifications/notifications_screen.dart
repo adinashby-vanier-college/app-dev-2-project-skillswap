@@ -75,7 +75,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   Text(
                     '${snapshot.error}',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface.withAlpha(153),
+                      color: colorScheme.onSurface.withValues(alpha: 153/255),
                     ),
                   ),
                 ],
@@ -93,13 +93,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   Icon(
                     Icons.notifications_none,
                     size: 64,
-                    color: colorScheme.onSurface.withAlpha(100),
+                    color: colorScheme.onSurface.withValues(alpha: 100/255),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'No notifications yet',
                     style: theme.textTheme.headlineSmall?.copyWith(
-                      color: colorScheme.onSurface.withAlpha(153),
+                      color: colorScheme.onSurface.withValues(alpha: 153/255),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -107,7 +107,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     'You\'ll see notifications here when you receive matches, messages, and session updates.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface.withAlpha(128),
+                      color: colorScheme.onSurface.withValues(alpha: 128/255),
                     ),
                   ),
                 ],
@@ -140,12 +140,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Card(
       elevation: isUnread ? 4 : 2,
       color: isUnread 
-          ? colorScheme.primaryContainer.withAlpha(51)
+          ? colorScheme.primaryContainer.withValues(alpha: 51/255)
           : null,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: isUnread 
-            ? BorderSide(color: colorScheme.primary.withAlpha(102), width: 1)
+            ? BorderSide(color: colorScheme.primary.withValues(alpha: 102/255), width: 1)
             : BorderSide.none,
       ),
       child: InkWell(
@@ -160,7 +160,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _getTypeColor(notification.type).withAlpha(51),
+                  color: _getTypeColor(notification.type).withValues(alpha: 51/255),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -202,7 +202,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     Text(
                       notification.body,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface.withAlpha(178),
+                        color: colorScheme.onSurface.withValues(alpha: 178/255),
                         height: 1.3,
                       ),
                     ),
@@ -212,13 +212,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         Icon(
                           Icons.access_time,
                           size: 12,
-                          color: colorScheme.onSurface.withAlpha(128),
+                          color: colorScheme.onSurface.withValues(alpha: 128/255),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           _formatTimestamp(notification.createdAt),
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface.withAlpha(128),
+                            color: colorScheme.onSurface.withValues(alpha: 128/255),
                           ),
                         ),
                         const Spacer(),
@@ -239,7 +239,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               PopupMenuButton<String>(
                 icon: Icon(
                   Icons.more_vert,
-                  color: colorScheme.onSurface.withAlpha(153),
+                  color: colorScheme.onSurface.withValues(alpha: 153/255),
                 ),
                 onSelected: (value) => _handleAction(notification, value),
                 itemBuilder: (context) => [

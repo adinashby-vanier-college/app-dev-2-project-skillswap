@@ -247,7 +247,7 @@ class SettingsScreen extends StatelessWidget {
             child: Text(
               'Version 1.0.0',
               style: TextStyle(
-                color: colorScheme.onSurface.withAlpha(179),
+                color: colorScheme.onSurface.withValues(alpha: 179/255),
                 fontSize: 12,
               ),
             ),
@@ -268,7 +268,7 @@ class SettingsScreen extends StatelessWidget {
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: colorScheme.onSurface.withAlpha(179),
+          color: colorScheme.onSurface.withValues(alpha: 179/255),
           letterSpacing: 0.5,
         ),
       ),
@@ -292,7 +292,7 @@ class SettingsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor.withAlpha(theme.brightness == Brightness.dark ? 20 : 10), // Adjusted shadow for dark mode
+            color: theme.shadowColor.withValues(alpha: (theme.brightness == Brightness.dark ? 20 : 10)/255), // Adjusted shadow for dark mode
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -316,13 +316,13 @@ class SettingsScreen extends StatelessWidget {
             ? Text(
           subtitle,
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurface.withAlpha(179),
+            color: colorScheme.onSurface.withValues(alpha: 179/255),
           ),
         )
             : null,
         trailing: Icon(
           Icons.chevron_right,
-          color: colorScheme.onSurface.withAlpha(102),
+          color: colorScheme.onSurface.withValues(alpha: 102/255),
         ),
         onTap: onTap,
       ),

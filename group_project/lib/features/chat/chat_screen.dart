@@ -368,7 +368,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
                                     padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey.withAlpha(51),
+                                      color: Colors.grey.withValues(alpha: 51/255),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Row(
@@ -425,25 +425,27 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
           ),
           const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      labelText: 'Type a message...',
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: const InputDecoration(
+                        labelText: 'Type a message...',
+                      ),
+                      onSubmitted: (_) => _sendMessage(),
                     ),
-                    onSubmitted: (_) => _sendMessage(),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  color: _canSend ? Theme.of(context).primaryColor : Colors.grey,
-                  onPressed: _canSend ? _sendMessage : null,
-                ),
-              ],
+                  IconButton(
+                    icon: const Icon(Icons.send),
+                    color: _canSend ? Theme.of(context).primaryColor : Colors.grey,
+                    onPressed: _canSend ? _sendMessage : null,
+                  ),
+                ],
+              ),
             ),
           ),
         ],

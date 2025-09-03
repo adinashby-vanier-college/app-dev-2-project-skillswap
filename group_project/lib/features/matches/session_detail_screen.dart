@@ -83,7 +83,7 @@ class SessionDetailScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: statusColor.withAlpha(51),
+                            color: statusColor.withValues(alpha: 51/255),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Row(
@@ -113,7 +113,7 @@ class SessionDetailScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withAlpha(51),
+                          color: Colors.blue.withValues(alpha: 51/255),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -177,7 +177,7 @@ class SessionDetailScreen extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withAlpha(25),
+                    color: colorScheme.primary.withValues(alpha: 25/255),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Wrap(
@@ -187,7 +187,7 @@ class SessionDetailScreen extends StatelessWidget {
                       return Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: colorScheme.primary.withAlpha(51),
+                          color: colorScheme.primary.withValues(alpha: 51/255),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -248,14 +248,14 @@ class SessionDetailScreen extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.grey.withAlpha(25),
+                      color: Colors.grey.withValues(alpha: 25/255),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       session['notes'],
                       style: TextStyle(
                         fontSize: 14,
-                        color: colorScheme.onSurface.withAlpha(204),
+                        color: colorScheme.onSurface.withValues(alpha: 204/255),
                         height: 1.5,
                       ),
                     ),

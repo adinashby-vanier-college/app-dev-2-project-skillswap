@@ -14,6 +14,7 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
+  bool _isPasswordVisible = false;
 
   Future<void> _signIn() async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -73,12 +74,21 @@ class _SignInScreenState extends State<SignInScreen> {
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
-                obscureText: true,
+                obscureText: !_isPasswordVisible,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _signIn(),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: "Password",
-                  suffixIcon: Icon(Icons.visibility_off),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 24),

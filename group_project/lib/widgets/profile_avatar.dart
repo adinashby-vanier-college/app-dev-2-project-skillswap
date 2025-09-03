@@ -31,7 +31,7 @@ class ProfileAvatar extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(25),
+            color: Colors.black.withValues(alpha: 25/255),
             blurRadius: 3,
             offset: const Offset(0, 1),
           ),
