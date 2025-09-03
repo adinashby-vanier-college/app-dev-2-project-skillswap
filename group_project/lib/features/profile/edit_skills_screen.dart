@@ -71,6 +71,7 @@ class _EditSkillsScreenState extends State<EditSkillsScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
+      if (!mounted || !context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving skills: $e')),
       );
@@ -116,7 +117,7 @@ class _EditSkillsScreenState extends State<EditSkillsScreen> {
         label: Text(skill),
         deleteIcon: const Icon(Icons.close, size: 18),
         onDeleted: isHave ? () => _removeSkillHave(skill) : () => _removeSkillWant(skill),
-        backgroundColor: Colors.red.withOpacity(0.1),
+        backgroundColor: Colors.red.withValues(alpha: 0.1),
         deleteIconColor: Colors.red,
         labelStyle: const TextStyle(color: Colors.red),
         side: const BorderSide(color: Colors.red, width: 1),
@@ -241,7 +242,7 @@ class _EditSkillsScreenState extends State<EditSkillsScreen> {
                 "Add multiple skills to find better matches",
                 style: TextStyle(
                   fontSize: 14,
-                  color: colorScheme.onSurface.withOpacity(0.6),
+                  color: colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
               const SizedBox(height: 30),
@@ -270,7 +271,7 @@ class _EditSkillsScreenState extends State<EditSkillsScreen> {
                 "💡 Tip: Add multiple skills to increase your chances of finding matches!",
                 style: TextStyle(
                   fontSize: 13,
-                  color: colorScheme.onSurface.withOpacity(0.7),
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
                   fontStyle: FontStyle.italic,
                 ),
               ),

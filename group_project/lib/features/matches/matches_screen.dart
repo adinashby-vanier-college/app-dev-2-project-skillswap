@@ -232,6 +232,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                                           await _chatService.initializeConversation(convoId);
                                           
                                           if (!mounted) return;
+                                          if (!context.mounted) return;
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
@@ -241,6 +242,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                                           );
                                         } catch (e) {
                                           if (!mounted) return;
+                                          if (!context.mounted) return;
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             SnackBar(content: Text('Failed to start chat: $e')),
                                           );
