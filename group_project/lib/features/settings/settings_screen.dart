@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 import '../profile/edit_profile_screen.dart';
+import '../profile/edit_skills_screen.dart';
+import '../notifications/notifications_screen.dart';
 import 'theme_settings_screen.dart';
+import '../notifications/fcm_test_screen.dart';
+import 'terms_of_service_screen.dart';
+import 'privacy_policy_screen.dart';
+import 'help_center_screen.dart';
+import 'send_feedback_screen.dart';
+import 'contact_us_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -63,12 +71,6 @@ class SettingsScreen extends StatelessWidget {
             title: 'My Skills',
             subtitle: 'Manage skills you offer',
             onTap: () => _navigateToSetting(context, 'My Skills'),
-          ),
-          _buildSettingsTile(
-            context,
-            icon: Icons.school_outlined,
-            title: 'Skills I Want to Learn',
-            onTap: () => _navigateToSetting(context, 'Skills I Want to Learn'),
           ),
           _buildSettingsTile(
             context,
@@ -167,6 +169,18 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.storage_outlined,
             title: 'Storage & Cache',
             onTap: () => _navigateToSetting(context, 'Storage & Cache'),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Developer Options Section
+          _buildSectionHeader(context, 'Developer Options'),
+          _buildSettingsTile(
+            context,
+            icon: Icons.bug_report,
+            title: 'Notification Testing',
+            subtitle: 'Test push notifications & FCM',
+            onTap: () => _navigateToSetting(context, 'FCM Test'),
           ),
 
           const SizedBox(height: 20),
@@ -347,14 +361,132 @@ class SettingsScreen extends StatelessWidget {
           ),
         );
         break;
-      default:
-      // Placeholder for other settings
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Navigate to: $setting'),
-            duration: const Duration(seconds: 1),
+      case 'My Skills':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const EditSkillsScreen(),
           ),
         );
+        break;
+      case 'New Match Notifications':
+      case 'Message Notifications':
+      case 'Skill Request Notifications':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const NotificationsScreen(),
+          ),
+        );
+        break;
+      case 'FCM Test':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const FCMTestScreen(),
+          ),
+        );
+        break;
+      case 'Terms of Service':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const TermsOfServiceScreen(),
+          ),
+        );
+        break;
+      case 'Privacy Policy':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PrivacyPolicyScreen(),
+          ),
+        );
+        break;
+      case 'Help Center':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HelpCenterScreen(),
+          ),
+        );
+        break;
+      case 'Send Feedback':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SendFeedbackScreen(),
+          ),
+        );
+        break;
+      case 'Contact Us':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ContactUsScreen(),
+          ),
+        );
+        break;
+      case 'Rate App':
+        _rateApp(context);
+        break;
+      default:
+      // Coming soon for other settings
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$setting - Coming Soon!'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.orange,
+          ),
+        );
+    }
+  }
+
+  Future<void> _rateApp(BuildContext context) async {
+    // Show a dialog asking user to rate
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Rate SkillSwap'),
+          content: const Text('Enjoying SkillSwap? Please take a moment to rate us on the app store!'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Maybe Later'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _openAppStore();
+              },
+              child: const Text('Rate Now'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _openAppStore() async {
+    // In a real app, these would be your actual app store URLs
+    const androidUrl = 'https://play.google.com/store/apps/details?id=com.skillswap.app';
+    const iosUrl = 'https://apps.apple.com/app/skillswap/id123456789';
+    
+    try {
+      // Try to launch the appropriate URL based on platform
+      // For now, just show a message since we don't have actual store URLs
+      // await launchUrl(Uri.parse(androidUrl));
+      
+      // Placeholder action
+      await Future.delayed(const Duration(milliseconds: 500));
+      // Show confirmation that we would open the store
+    } catch (e) {
+      // Handle error - could show a snackbar
+      debugPrint('Could not launch app store: $e');
     }
   }
 
