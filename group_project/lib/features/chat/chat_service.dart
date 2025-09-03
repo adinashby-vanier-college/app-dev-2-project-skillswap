@@ -4,9 +4,11 @@ import 'package:flutter/cupertino.dart';
 import 'models/conversation_preview.dart';
 import 'models/message.dart';
 import 'mock/mock_conversations.dart';
+import '../../services/notification_service.dart';
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final NotificationService _notificationService = NotificationService();
 
   String get currentUserId => FirebaseAuth.instance.currentUser!.uid;
 
@@ -48,6 +50,21 @@ class ChatService {
         'lastMessageDeleted': false, // Reset deletion flag on new message
       }, SetOptions(merge: true));
     });
+
+    // Send notification to chat partner
+    try {
+      final currentUserDoc = await _firestore.collection('users').doc(currentUserId).get();
+      final currentUserName = currentUserDoc.data()?['name'] ?? 'Someone';
+      
+      await _notificationService.notifyNewMessage(
+        userId: chatPartnerId,
+        senderName: currentUserName,
+        message: text,
+        conversationId: conversationId,
+      );
+    } catch (e) {
+      debugPrint('Failed to send message notification: $e');
+    }
 
     // Add dummy auto-response for testing
     _sendDummyResponse(conversationId, chatPartnerId);

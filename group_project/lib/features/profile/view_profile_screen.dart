@@ -372,7 +372,7 @@ class ViewProfileScreen extends StatelessWidget {
       final lng = location['longitude'];
       if (lat != null && lng != null) {
         // For privacy, just show a general area instead of exact coordinates
-        return "Montreal Area"; // You could make this more sophisticated
+        return "Montreal Area";
       }
     }
     

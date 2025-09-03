@@ -90,6 +90,9 @@ CLAUDE.md
 claude-*.log
 claude_*.log
 
+# Setup and configuration files
+FCM_SETUP.md
+
 # Mock data scripts (development only)
 scripts/
 *.bat

@@ -8,6 +8,8 @@ import '../profile/edit_skills_screen.dart';
 import '../matches/matches_screen.dart';
 import '../matches/match_history_screen.dart';
 import '../matches/all_sessions_screen.dart';
+import '../../services/notification_service.dart';
+import '../notifications/notifications_screen.dart';
 import '../chat/chat_service.dart';
 import '../chat/models/conversation_preview.dart';
 
@@ -121,10 +123,50 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
-          IconButton(
-            tooltip: 'Notifications',
-            icon: Icon(Icons.notifications_outlined, color: colorScheme.onSurface),
-            onPressed: () {},
+          StreamBuilder<int>(
+            stream: NotificationService().getUnreadCount(),
+            builder: (context, snapshot) {
+              final unreadCount = snapshot.data ?? 0;
+              
+              return Stack(
+                children: [
+                  IconButton(
+                    tooltip: 'Notifications',
+                    icon: Icon(Icons.notifications_outlined, color: colorScheme.onSurface),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  if (unreadCount > 0)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        constraints: const BoxConstraints(minWidth: 16),
+                        child: Text(
+                          unreadCount > 99 ? '99+' : '$unreadCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
           IconButton(
             tooltip: 'Sign out',

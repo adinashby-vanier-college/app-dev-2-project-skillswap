@@ -42,6 +42,12 @@ dependencies:
   # Firebase Storage (for profile photo uploads)
   firebase_storage: ^13.0.0
 
+  # Firebase Messaging (for push notifications)
+  firebase_messaging: ^16.0.0
+
+  # Local notifications
+  flutter_local_notifications: ^17.2.3
+
   # Image Picker (for selecting/taking profile photos)
   image_picker: ^1.1.2
 
@@ -55,7 +61,6 @@ dependencies:
 
   # Timestamp
   intl: ^0.20.2
-
 
   # Icons
   flutter_svg: ^2.0.10
