@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_service.dart';
 import '../../utils/custom_colors.dart';
 import '../../widgets/custom_button.dart';
@@ -27,12 +28,30 @@ class _SignInScreenState extends State<SignInScreen> {
       scaffoldMessenger.showSnackBar(
         const SnackBar(content: Text("Signed in successfully")),
       );
-
       navigator.pushReplacementNamed('/home');
-
     } catch (e) {
       scaffoldMessenger.showSnackBar(
         SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  Future<void> _signInWithTwitter() async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      final twitterProvider = TwitterAuthProvider();
+      await FirebaseAuth.instance.signInWithProvider(twitterProvider);
+
+      final user = FirebaseAuth.instance.currentUser;
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text("Twitter sign in: ${user?.displayName ?? "Success"}")),
+      );
+
+      navigator.pushReplacementNamed('/home');
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text("Twitter login failed: $e")),
       );
     }
   }
@@ -103,15 +122,15 @@ class _SignInScreenState extends State<SignInScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/signUp');
-                    },
+                    onPressed: _signInWithTwitter,
                     icon: const Icon(Icons.alternate_email),
                     label: const Text("Twitter"),
                   ),
                   const SizedBox(width: 16),
                   ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      // TODO: Facebook login implementation
+                    },
                     icon: const Icon(Icons.facebook),
                     label: const Text("Facebook"),
                   ),
@@ -122,7 +141,9 @@ class _SignInScreenState extends State<SignInScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // TODO: implement Forgot Password
+                    },
                     child: const Text("Forgot Password?"),
                   ),
                   TextButton(
