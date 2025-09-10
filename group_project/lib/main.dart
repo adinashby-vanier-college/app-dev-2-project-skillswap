@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'providers/theme_provider.dart';
 import 'features/auth/sign_in_screen.dart';
@@ -8,7 +10,6 @@ import 'features/auth/sign_up_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/chat/conversations_screen.dart';
 import 'features/chat/archived_chats_screen.dart';
-import 'services/fcm_service.dart';
 
 /// Background handler for Firebase messages (must be top-level).
 @pragma('vm:entry-point')
@@ -24,6 +25,17 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  
+  // Add performance monitoring in debug mode
+  if (kDebugMode) {
+    SchedulerBinding.instance.addTimingsCallback((timings) {
+      for (final timing in timings) {
+        if (timing.totalSpan.inMilliseconds > 16) {
+          debugPrint('⚠️ Frame took ${timing.totalSpan.inMilliseconds}ms');
+        }
+      }
+    });
+  }
   
   runApp(const SkillSwapApp());
 }
@@ -51,7 +63,7 @@ class SkillSwapApp extends StatelessWidget {
               useMaterial3: true,
             ),
             debugShowCheckedModeBanner: false,
-            home: const FCMInitializationWrapper(child: SignInScreen()),
+            home: const SignInScreen(),
             routes: {
               '/signIn': (context) => const SignInScreen(),
               '/signUp': (context) => const SignUpScreen(),
@@ -66,66 +78,6 @@ class SkillSwapApp extends StatelessWidget {
   }
 }
 
-// FCM Initialization Wrapper
-class FCMInitializationWrapper extends StatefulWidget {
-  final Widget child;
-  
-  const FCMInitializationWrapper({super.key, required this.child});
-
-  @override
-  State<FCMInitializationWrapper> createState() => _FCMInitializationWrapperState();
-}
-
-class _FCMInitializationWrapperState extends State<FCMInitializationWrapper> {
-  bool _isInitialized = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeFCM();
-  }
-
-  Future<void> _initializeFCM() async {
-    try {
-      // Initialize FCM service
-      await FCMService().initialize();
-      debugPrint('✅ FCM Service initialized successfully');
-    } catch (e) {
-      debugPrint('❌ Error initializing FCM: $e');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isInitialized = true;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Show loading while FCM initializes
-    if (!_isInitialized) {
-      return Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        body: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text(
-                'Setting up notifications...',
-                style: TextStyle(fontSize: 16),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return widget.child;
-  }
-}
 
 // class AuthGate extends StatelessWidget {
 //   const AuthGate({super.key});
