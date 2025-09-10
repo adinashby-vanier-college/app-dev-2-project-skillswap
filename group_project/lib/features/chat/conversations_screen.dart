@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'models/conversation_preview.dart';
 import 'chat_service.dart';
 import 'chat_screen.dart';
-import '../../../widgets/profile_avatar.dart';
+import '../../widgets/profile_avatar.dart';
 import '../profile/view_profile_screen.dart';
+import '../../widgets/cached_user_name.dart';
 
 /// Screen displaying list of user's chat conversations.
 class ConversationsScreen extends StatefulWidget {
@@ -16,11 +16,12 @@ class ConversationsScreen extends StatefulWidget {
 
 class _ConversationsScreenState extends State<ConversationsScreen> {
   final ChatService _chatService = ChatService();
-  final Map<String, String> _userNamesCache = {};
+  late final Stream<List<ConversationPreview>> _conversationsStream;
 
   @override
   void initState() {
     super.initState();
+    _conversationsStream = _chatService.getConversations(includeArchived: false);
   }
 
   Future<bool?> _showConfirmationDialog(String title, String message) {
@@ -82,32 +83,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
   }
 
 
-  Future<String> _getUserName(String userId) async {
-    if (_userNamesCache.containsKey(userId)) {
-      return _userNamesCache[userId]!;
-    }
-
-    final mockUsers = ['Alice', 'Bob', 'Carol', 'Dave', 'Eve', 'Frank', 'Grace', 'Hank'];
-    if (mockUsers.contains(userId)) {
-      _userNamesCache[userId] = userId;
-      return userId;
-    }
-
-    try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
-      
-      final userData = userDoc.data();
-      final name = userData?['name']?.toString() ?? userId;
-      _userNamesCache[userId] = name;
-      return name;
-    } catch (e) {
-      _userNamesCache[userId] = userId;
-      return userId;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +120,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
         ],
       ),
       body: StreamBuilder<List<ConversationPreview>>(
-        stream: _chatService.getConversations(includeArchived: false),
+        stream: _conversationsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -164,6 +139,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
           }
 
           return ListView.separated(
+            cacheExtent: 500, // Cache more items to reduce rebuild cost
             itemCount: conversations.length,
             separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, index) {
@@ -201,12 +177,9 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                   }
                   return false;
                 },
-                child: FutureBuilder<String>(
-                  future: _getUserName(chatPartnerId),
-                  builder: (context, userNameSnapshot) {
-                    final userName = userNameSnapshot.data ?? chatPartnerId;
-                    
-                    return ListTile(
+                child: CachedUserName(
+                  userId: chatPartnerId,
+                  builder: (userName) => ListTile(
                       leading: GestureDetector(
                         onTap: () {
                           final mockUsers = ['Alice', 'Bob', 'Carol', 'Dave', 'Eve', 'Frank', 'Grace', 'Hank'];
@@ -276,9 +249,8 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                           ),
                         );
                       },
-                    );
-                  },
-                ),
+                    ),
+                  ),
               );
             },
           );

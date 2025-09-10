@@ -25,6 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   final _searchCtrl = TextEditingController();
   final ChatService _chatService = ChatService();
+  late final Stream<List<ConversationPreview>> _conversationsStream;
+  late final Stream<int> _notificationsStream;
 
   User? get _user => FirebaseAuth.instance.currentUser;
 
@@ -37,6 +39,14 @@ class _HomeScreenState extends State<HomeScreen> {
       await FirebaseAuth.instance.currentUser?.reload();
       setState(() {});
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize streams once to prevent multiple subscriptions
+    _conversationsStream = _chatService.getConversations(includeArchived: false);
+    _notificationsStream = NotificationService().getUnreadCount();
   }
 
   @override
@@ -83,15 +93,17 @@ class _HomeScreenState extends State<HomeScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            Container(
-              height: 34,
-              width: 34,
-              margin: const EdgeInsets.only(right: 12),
-              decoration: BoxDecoration(
-                color: colorScheme.primary.withValues(alpha: 25/255),
-                borderRadius: BorderRadius.circular(8),
+            RepaintBoundary(
+              child: Container(
+                height: 34,
+                width: 34,
+                margin: const EdgeInsets.only(right: 12),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 25/255),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Center(child: FlutterLogo(size: 20)),
               ),
-              child: const Center(child: FlutterLogo(size: 20)),
             ),
             Text(
               'SkillSwap',
@@ -125,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           StreamBuilder<int>(
-            stream: NotificationService().getUnreadCount(),
+            stream: _notificationsStream,
             builder: (context, snapshot) {
               final unreadCount = snapshot.data ?? 0;
               
@@ -268,13 +280,14 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 18),
             _sectionTitle('Quick actions', colorScheme),
             const SizedBox(height: 10),
-            GridView.count(
-              crossAxisCount: 2,
-              childAspectRatio: 1.0,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              physics: const NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
+            RepaintBoundary(
+              child: GridView.count(
+                crossAxisCount: 2,
+                childAspectRatio: 1.0,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
               children: [
                 _featureCard(
                   icon: Icons.people_outline,
@@ -316,7 +329,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
 
                 StreamBuilder<List<ConversationPreview>>(
-                  stream: _chatService.getConversations(includeArchived: false),
+                  stream: _conversationsStream,
                   builder: (context, snapshot) {
                     final conversations = snapshot.data ?? [];
                     final totalUnread = conversations.fold<int>(
@@ -360,12 +373,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   theme: theme,
                 ),
               ],
+              ),
             ),
           ],
         ),
       ),
       bottomNavigationBar: StreamBuilder<List<ConversationPreview>>(
-        stream: _chatService.getConversations(includeArchived: false),
+        stream: _conversationsStream,
         builder: (context, snapshot) {
           final conversations = snapshot.data ?? [];
           final totalUnread = conversations.fold<int>(
@@ -437,40 +451,174 @@ class _HomeScreenState extends State<HomeScreen> {
     required VoidCallback onTap,
     required ThemeData theme,
   }) {
+    return _FeatureCard(
+      icon: icon,
+      label: label,
+      color: color,
+      onTap: onTap,
+      theme: theme,
+    );
+  }
+
+  Widget _featureCardWithBadge({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+    required ThemeData theme,
+    required int badgeCount,
+  }) {
+    return _FeatureCardWithBadge(
+      icon: icon,
+      label: label,
+      color: color,
+      onTap: onTap,
+      theme: theme,
+      badgeCount: badgeCount,
+    );
+  }
+}
+
+class _FeatureCardWithBadge extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  final ThemeData theme;
+  final int badgeCount;
+
+  const _FeatureCardWithBadge({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+    required this.theme,
+    required this.badgeCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = theme.brightness == Brightness.dark;
     
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark 
-              ? [
-                  theme.cardColor,
-                  theme.cardColor.withValues(alpha: 200/255),
-                ]
-              : [
-                  Colors.white,
-                  Colors.grey.shade50,
-                ],
+        color: theme.cardColor,
+        border: Border.all(
+          color: isDark 
+              ? Colors.white.withValues(alpha: 20/255)
+              : color.withValues(alpha: 40/255),
+          width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 30/255),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-            spreadRadius: -5,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          highlightColor: color.withValues(alpha: 20/255),
+          splashColor: color.withValues(alpha: 30/255),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
+                  children: [
+                    Container(
+                      height: 52,
+                      width: 52,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 120/255),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        icon, 
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                    if (badgeCount > 0)
+                      Positioned(
+                        right: -2,
+                        top: -2,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 20,
+                            minHeight: 20,
+                          ),
+                          child: Text(
+                            badgeCount > 99 ? '99+' : '$badgeCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const Spacer(),
+                Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: theme.colorScheme.onSurface,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  height: 3,
+                  width: 30,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ],
+            ),
           ),
-          BoxShadow(
-            color: isDark 
-                ? Colors.black.withValues(alpha: 40/255)
-                : Colors.grey.shade300.withValues(alpha: 100/255),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-            spreadRadius: -8,
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeatureCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  final ThemeData theme;
+
+  const _FeatureCard({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: theme.cardColor,
         border: Border.all(
           color: isDark 
               ? Colors.white.withValues(alpha: 20/255)
@@ -495,23 +643,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 52,
                   width: 52,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        color.withValues(alpha: 120/255),
-                        color.withValues(alpha: 80/255),
-                      ],
-                    ),
+                    color: color.withValues(alpha: 120/255),
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withValues(alpha: 60/255),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                        spreadRadius: -2,
-                      ),
-                    ],
                   ),
                   child: Icon(
                     icon, 
@@ -536,12 +669,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 3,
                   width: 30,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        color,
-                        color.withValues(alpha: 100/255),
-                      ],
-                    ),
+                    color: color,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -689,12 +817,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 3,
                   width: 30,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        color,
-                        color.withValues(alpha: 100/255),
-                      ],
-                    ),
+                    color: color,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

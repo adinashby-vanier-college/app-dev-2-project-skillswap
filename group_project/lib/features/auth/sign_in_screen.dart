@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'auth_service.dart';
 import '../../utils/custom_colors.dart';
 import '../../widgets/custom_button.dart';
+import '../../services/fcm_service.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -36,6 +37,12 @@ class _SignInScreenState extends State<SignInScreen> {
       scaffoldMessenger.showSnackBar(
         const SnackBar(content: Text("Signed in successfully")),
       );
+      
+      // Initialize FCM after successful sign in
+      FCMService().initialize().catchError((e) {
+        debugPrint('FCM initialization error: $e');
+      });
+      
       navigator.pushReplacementNamed('/home');
     } catch (e) {
       scaffoldMessenger.showSnackBar(
@@ -64,6 +71,12 @@ class _SignInScreenState extends State<SignInScreen> {
       scaffoldMessenger.showSnackBar(
         SnackBar(content: Text("Google sign in: ${user.displayName ?? "Success"}")),
       );
+      
+      // Initialize FCM after successful sign in
+      FCMService().initialize().catchError((e) {
+        debugPrint('FCM initialization error: $e');
+      });
+      
       navigator.pushReplacementNamed('/home');
     } catch (e) {
       debugPrint("Google sign-in error details: $e");
@@ -95,6 +108,12 @@ class _SignInScreenState extends State<SignInScreen> {
       scaffoldMessenger.showSnackBar(
         SnackBar(content: Text("Twitter sign in: ${user.displayName ?? "Success"}")),
       );
+      
+      // Initialize FCM after successful sign in
+      FCMService().initialize().catchError((e) {
+        debugPrint('FCM initialization error: $e');
+      });
+      
       navigator.pushReplacementNamed('/home');
     } catch (e) {
       scaffoldMessenger.showSnackBar(
