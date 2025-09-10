@@ -171,13 +171,10 @@ class ChatService {
       for (var doc in snapshot.docs) {
         try {
           final data = doc.data();
-          debugPrint('Processing message doc ${doc.id}: $data');
-          
           final message = Message.fromMap(data, doc.id, conversationId);
           messages.add(message);
         } catch (e) {
-          debugPrint('Error processing message ${doc.id}: $e');
-          debugPrint('Message data: ${doc.data()}');
+          // Error processing message handled silently
         }
       }
       

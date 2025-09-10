@@ -13,10 +13,7 @@ import 'features/chat/archived_chats_screen.dart';
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  debugPrint("Handling background message: ${message.messageId}");
-  debugPrint("Title: ${message.notification?.title}");
-  debugPrint("Body: ${message.notification?.body}");
-  debugPrint("Data: ${message.data}");
+  // Background message handled silently
 }
 
 void main() async {
