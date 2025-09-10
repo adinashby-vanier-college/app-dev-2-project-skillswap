@@ -40,7 +40,7 @@ class _SignInScreenState extends State<SignInScreen> {
       
       // Initialize FCM after successful sign in
       FCMService().initialize().catchError((e) {
-        debugPrint('FCM initialization error: $e');
+        // FCM initialization error handled silently
       });
       
       navigator.pushReplacementNamed('/home');
@@ -74,13 +74,12 @@ class _SignInScreenState extends State<SignInScreen> {
       
       // Initialize FCM after successful sign in
       FCMService().initialize().catchError((e) {
-        debugPrint('FCM initialization error: $e');
+        // FCM initialization error handled silently
       });
       
       navigator.pushReplacementNamed('/home');
     } catch (e) {
-      debugPrint("Google sign-in error details: $e");
-      debugPrint("Error type: ${e.runtimeType}");
+      // Google sign-in error handled silently
       scaffoldMessenger.showSnackBar(
         SnackBar(content: Text("Google login failed: ${e.toString()}")),
       );
@@ -111,7 +110,7 @@ class _SignInScreenState extends State<SignInScreen> {
       
       // Initialize FCM after successful sign in
       FCMService().initialize().catchError((e) {
-        debugPrint('FCM initialization error: $e');
+        // FCM initialization error handled silently
       });
       
       navigator.pushReplacementNamed('/home');

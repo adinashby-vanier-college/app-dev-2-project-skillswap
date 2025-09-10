@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 
 /// Model representing a chat message.
 class Message {
@@ -61,8 +60,7 @@ class Message {
         isDeleted: data['isDeleted'] ?? false,
       );
     } catch (e) {
-      debugPrint('Error in Message.fromMap: $e');
-      debugPrint('Full data: $data');
+      // Error in Message.fromMap handled silently
       rethrow;
     }
   }
