@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'models/session_proposal.dart';
+import '../../utils/app_logger.dart';
 
 /// Service for managing skill-sharing session proposals and bookings.
 class SessionService {
@@ -32,9 +32,18 @@ class SessionService {
         throw Exception('User not authenticated');
       }
 
-      debugPrint('Creating session proposal for user: $currentUserId');
-      debugPrint('Conversation ID: $conversationId');
-      debugPrint('Recipient ID: $recipientId');
+      // Validate that the proposed date is not in the past
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final sessionDate = DateTime(proposedDate.year, proposedDate.month, proposedDate.day);
+      
+      if (sessionDate.isBefore(today)) {
+        throw Exception('Cannot create sessions for past dates. Please select a future date.');
+      }
+
+      AppLogger.debug('Creating session proposal for user: $currentUserId', tag: 'SESSION');
+      AppLogger.debug('Conversation ID: $conversationId', tag: 'SESSION');
+      AppLogger.debug('Recipient ID: $recipientId', tag: 'SESSION');
 
       final proposal = SessionProposal(
         id: '', // Will be set by Firestore
@@ -53,13 +62,13 @@ class SessionService {
         createdAt: DateTime.now(),
       );
 
-      debugPrint('Proposal data: ${proposal.toMap()}');
+      AppLogger.debug('Proposal data: ${proposal.toMap()}', tag: 'SESSION');
 
       final docRef = await _firestore
           .collection('session_proposals')
           .add(proposal.toMap());
 
-      debugPrint('Proposal created with ID: ${docRef.id}');
+      AppLogger.debug('Proposal created with ID: ${docRef.id}', tag: 'SESSION');
 
       try {
         await _sendProposalMessage(
@@ -67,22 +76,22 @@ class SessionService {
           proposalId: docRef.id,
           proposerName: await _getUserName(currentUserId!),
         );
-        debugPrint('Proposal message sent successfully');
+        AppLogger.debug('Proposal message sent successfully', tag: 'SESSION');
       } catch (e) {
-        debugPrint('Failed to send proposal message: $e');
+        AppLogger.error('Failed to send proposal message', tag: 'SESSION', error: e);
       }
 
-      debugPrint('Checking recipient ID: $recipientId against mock users: $mockUsers');
+      AppLogger.debug('Checking recipient ID: $recipientId against mock users: $mockUsers', tag: 'SESSION');
       if (mockUsers.contains(recipientId)) {
-        debugPrint('Auto-accepting proposal for mock user: $recipientId');
+        AppLogger.debug('Auto-accepting proposal for mock user: $recipientId', tag: 'SESSION');
         await _autoAcceptProposal(docRef.id, recipientId);
       } else {
-        debugPrint('Recipient $recipientId is not a mock user, no auto-accept');
+        AppLogger.debug('Recipient $recipientId is not a mock user, no auto-accept', tag: 'SESSION');
       }
 
       return docRef.id;
     } catch (e) {
-      debugPrint('Error creating session proposal: $e');
+      AppLogger.error('Error creating session proposal', tag: 'SESSION', error: e);
       rethrow;
     }
   }
@@ -225,7 +234,7 @@ class SessionService {
     required String proposerName,
   }) async {
     try {
-      debugPrint('Sending proposal message to conversation: $conversationId');
+      AppLogger.debug('Sending proposal message to conversation: $conversationId', tag: 'SESSION');
       
       final now = DateTime.now();
       final messageText = '📅 $proposerName proposed a session';
@@ -238,7 +247,7 @@ class SessionService {
         'proposalId': proposalId,
       };
       
-      debugPrint('Message data: $messageData');
+      AppLogger.debug('Message data: $messageData', tag: 'SESSION');
       
       final convoRef = _firestore.collection('conversations').doc(conversationId);
       
@@ -254,9 +263,9 @@ class SessionService {
         });
       });
           
-      debugPrint('Message sent successfully');
+      AppLogger.debug('Message sent successfully', tag: 'SESSION');
     } catch (e) {
-      debugPrint('Error sending proposal message: $e');
+      AppLogger.error('Error sending proposal message', tag: 'SESSION', error: e);
       rethrow;
     }
   }
@@ -326,7 +335,7 @@ class SessionService {
   }
 
   /// Gets booked sessions for the current user.
-  Stream<List<Map<String, dynamic>>> getBookedSessions() {
+  Stream<List<Map<String, dynamic>>> getBookedSessions({bool includeOldSessions = false}) {
     if (currentUserId == null) return Stream.value([]);
 
     return _firestore
@@ -342,6 +351,23 @@ class SessionService {
         _autoCompleteOldSessions(doc.id, data);
         
         return data;
+      }).where((sessionData) {
+        // Filter out old sessions unless explicitly requested
+        if (includeOldSessions) return true;
+        
+        try {
+          final sessionDate = DateTime.parse(sessionData['date']);
+          final now = DateTime.now();
+          final today = DateTime(now.year, now.month, now.day);
+          final sessionDateOnly = DateTime(sessionDate.year, sessionDate.month, sessionDate.day);
+          
+          // Only show sessions from today onwards
+          return !sessionDateOnly.isBefore(today);
+        } catch (e) {
+          AppLogger.error('Error parsing session date', tag: 'SESSION', error: e);
+          // Keep the session if date parsing fails
+          return true;
+        }
       }).toList();
       
       return sessions;
@@ -366,10 +392,10 @@ class SessionService {
           'notes': 'Session completed successfully!',
         });
         
-        debugPrint('Auto-completed old session: $sessionId');
+        AppLogger.debug('Auto-completed old session: $sessionId', tag: 'SESSION');
       }
     } catch (e) {
-      debugPrint('Error auto-completing session: $e');
+      AppLogger.error('Error auto-completing session', tag: 'SESSION', error: e);
     }
   }
 
@@ -384,14 +410,14 @@ class SessionService {
           .get();
       
       if (!proposalDoc.exists) {
-        debugPrint('Proposal $proposalId no longer exists');
+        AppLogger.debug('Proposal $proposalId no longer exists', tag: 'SESSION');
         return;
       }
 
       final proposal = SessionProposal.fromMap(proposalDoc.data()!, proposalId);
       
       if (proposal.status != SessionProposalStatus.pending) {
-        debugPrint('Proposal $proposalId is no longer pending (status: ${proposal.status}), skipping auto-accept');
+        AppLogger.debug('Proposal $proposalId is no longer pending (status: ${proposal.status}), skipping auto-accept', tag: 'SESSION');
         return;
       }
 
@@ -412,9 +438,9 @@ class SessionService {
         responderName: mockUserId,
       );
       
-      debugPrint('Auto-accepted proposal $proposalId for mock user $mockUserId');
+      AppLogger.debug('Auto-accepted proposal $proposalId for mock user $mockUserId', tag: 'SESSION');
     } catch (e) {
-      debugPrint('Error auto-accepting proposal: $e');
+      AppLogger.error('Error auto-accepting proposal', tag: 'SESSION', error: e);
     }
   }
 
@@ -432,8 +458,63 @@ class SessionService {
         'cancelledBy': currentUserId,
       });
     } catch (e) {
-      debugPrint('Error cancelling session: $e');
+      AppLogger.error('Error cancelling session', tag: 'SESSION', error: e);
       rethrow;
+    }
+  }
+
+  /// Updates all old sessions to have future dates.
+  /// This is a one-time cleanup method for development.
+  Future<void> updateOldSessionsToFuture() async {
+    if (currentUserId == null) return;
+    
+    try {
+      AppLogger.debug('Starting cleanup of old sessions', tag: 'SESSION');
+      
+      final sessionsSnapshot = await _firestore
+          .collection('booked_sessions')
+          .where('participants', arrayContains: currentUserId)
+          .get();
+      
+      final batch = _firestore.batch();
+      int updatedCount = 0;
+      final now = DateTime.now();
+      
+      for (var doc in sessionsSnapshot.docs) {
+        final data = doc.data();
+        try {
+          final sessionDate = DateTime.parse(data['date']);
+          final today = DateTime(now.year, now.month, now.day);
+          final sessionDateOnly = DateTime(sessionDate.year, sessionDate.month, sessionDate.day);
+          
+          // If session is in the past, update it to a future date
+          if (sessionDateOnly.isBefore(today)) {
+            // Update to a random date in the next 30 days
+            final daysToAdd = 1 + (now.millisecond % 30);
+            final newDate = today.add(Duration(days: daysToAdd));
+            final newDateString = newDate.toIso8601String();
+            
+            batch.update(doc.reference, {
+              'date': newDateString,
+              'status': 'scheduled', // Reset status if it was completed
+            });
+            
+            updatedCount++;
+            AppLogger.debug('Updated session ${doc.id} from ${sessionDate.toIso8601String()} to $newDateString', tag: 'SESSION');
+          }
+        } catch (e) {
+          AppLogger.error('Error processing session ${doc.id}', tag: 'SESSION', error: e);
+        }
+      }
+      
+      if (updatedCount > 0) {
+        await batch.commit();
+        AppLogger.debug('Updated $updatedCount old sessions to future dates', tag: 'SESSION');
+      } else {
+        AppLogger.debug('No old sessions found to update', tag: 'SESSION');
+      }
+    } catch (e) {
+      AppLogger.error('Error updating old sessions', tag: 'SESSION', error: e);
     }
   }
 

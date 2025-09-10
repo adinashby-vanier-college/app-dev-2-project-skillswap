@@ -5,128 +5,173 @@ import 'session_detail_screen.dart';
 import '../chat/session_service.dart';
 
 /// Screen displaying all booked sessions for the user.
-class AllSessionsScreen extends StatelessWidget {
+class AllSessionsScreen extends StatefulWidget {
   const AllSessionsScreen({super.key});
 
-  static final SessionService _sessionService = SessionService();
+  @override
+  State<AllSessionsScreen> createState() => _AllSessionsScreenState();
+}
 
-  // Keep some mock data as fallback, but will primarily use real data
-  static final List<Map<String, dynamic>> _fallbackMockSessions = [
-    // Recent/Upcoming sessions first
-    {
-      'id': 'session2_6',
-      'title': 'Machine Learning Introduction',
-      'partner': 'Bob',
-      'date': '2024-01-18',
-      'time': '19:00',
-      'duration': '2.5 hours',
-      'location': 'Online (Google Meet)',
-      'skills': ['Scikit-learn', 'Data Visualization'],
-      'status': 'scheduled',
-      'notes': '',
-      'rating': 0,
-      'type': 'virtual',
-    },
-    {
-      'id': 'session1_4',
-      'title': 'Advanced Techniques',
-      'partner': 'Alice',
-      'date': '2024-01-15',
-      'time': '14:00',
-      'duration': '2 hours',
-      'location': 'Online (Zoom)',
-      'skills': ['Fingerpicking', 'Advanced Piano Chords'],
-      'status': 'completed',
-      'notes': 'Virtual session worked well. Focused on more complex techniques.',
-      'rating': 4,
-      'type': 'virtual',
-    },
-    {
-      'id': 'session1_6',
-      'title': 'Juggling Workshop',
-      'partner': 'Frank',
-      'date': '2024-01-12',
-      'time': '15:30',
-      'duration': '1.5 hours',
-      'location': 'City Park',
-      'skills': ['Basic Juggling', 'Hand-Eye Coordination'],
-      'status': 'completed',
-      'notes': 'Fun outdoor session! Frank is a great teacher.',
-      'rating': 5,
-      'type': 'in-person',
-    },
-    {
-      'id': 'session2_5',
-      'title': 'Code Review & Best Practices',
-      'partner': 'Bob',
-      'date': '2024-01-10',
-      'time': '18:00',
-      'duration': '2 hours',
-      'location': 'Coffee Bean Cafe',
-      'skills': ['Code Quality', 'Git Workflows'],
-      'status': 'completed',
-      'notes': 'Reviewed each other\'s projects. Great feedback and learning experience.',
-      'rating': 5,
-      'type': 'in-person',
-    },
-    {
-      'id': 'session1_3',
-      'title': 'Song Practice Session',
-      'partner': 'Alice',
-      'date': '2024-01-08',
-      'time': '16:00', 
-      'duration': '3 hours',
-      'location': 'Music Room, Community Center',
-      'skills': ['Song Performance', 'Rhythm Coordination'],
-      'status': 'completed',
-      'notes': 'Practiced "Wonderwall" together. Great progress on both instruments!',
-      'rating': 4,
-      'type': 'in-person',
-    },
-    {
-      'id': 'session2_4',
-      'title': 'Advanced Debugging Techniques',
-      'partner': 'Bob',
-      'date': '2024-01-05',
-      'time': '19:30',
-      'duration': '2 hours',
-      'location': 'TechHub Coworking Space',
-      'skills': ['Python Debugging', 'Chrome DevTools'],
-      'status': 'completed',
-      'notes': 'Learned professional debugging workflows. Very practical session.',
-      'rating': 5,
-      'type': 'in-person',
-    },
-    // Older sessions
-    {
-      'id': 'session3_3',
-      'title': 'Final Project Presentation',
-      'partner': 'Carol',
-      'date': '2023-12-20',
-      'time': '16:00',
-      'duration': '2 hours',
-      'location': 'Community Art Gallery',
-      'skills': ['Project Showcase', 'Peer Review'],
-      'status': 'completed',
-      'notes': 'Showcased our final pieces. Both learned so much throughout this exchange!',
-      'rating': 5,
-      'type': 'in-person',
-    },
-    {
-      'id': 'session2_3',
-      'title': 'API Development Workshop',
-      'partner': 'Bob',
-      'date': '2023-12-15',
-      'time': '20:00',
-      'duration': '2.5 hours',
-      'location': 'Online (Discord)',
-      'skills': ['REST APIs', 'Database Integration'],
-      'status': 'completed',
-      'notes': 'Virtual coding session. Screen sharing made it easy to collaborate.',
-      'rating': 4,
-      'type': 'virtual',
-    },
-  ];
+class _AllSessionsScreenState extends State<AllSessionsScreen> {
+  static final SessionService _sessionService = SessionService();
+  bool _isUpdating = false;
+
+  Future<void> _updateOldSessions() async {
+    setState(() => _isUpdating = true);
+    
+    try {
+      await _sessionService.updateOldSessionsToFuture();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Old sessions updated to future dates!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating sessions: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdating = false);
+      }
+    }
+  }
+
+  // Generate dynamic mock data with current dates
+  static List<Map<String, dynamic>> get _fallbackMockSessions {
+    final now = DateTime.now();
+    final tomorrow = now.add(const Duration(days: 1));
+    final nextWeek = now.add(const Duration(days: 7));
+    final nextMonth = now.add(const Duration(days: 30));
+    final lastWeek = now.subtract(const Duration(days: 7));
+    final lastMonth = now.subtract(const Duration(days: 30));
+    final twoWeeksAgo = now.subtract(const Duration(days: 14));
+    final oneMonthAgo = now.subtract(const Duration(days: 35));
+    final twoMonthsAgo = now.subtract(const Duration(days: 60));
+    
+    return [
+      {
+        'id': 'mock_session_1',
+        'title': 'Machine Learning Introduction',
+        'partner': 'Bob',
+        'date': nextWeek.toIso8601String(),
+        'time': '19:00',
+        'duration': '2.5 hours',
+        'location': 'Online (Google Meet)',
+        'skills': ['Scikit-learn', 'Data Visualization'],
+        'status': 'scheduled',
+        'notes': '',
+        'rating': 0,
+        'type': 'virtual',
+      },
+      {
+        'id': 'mock_session_2',
+        'title': 'Advanced Techniques',
+        'partner': 'Alice',
+        'date': tomorrow.toIso8601String(),
+        'time': '14:00',
+        'duration': '2 hours',
+        'location': 'Online (Zoom)',
+        'skills': ['Fingerpicking', 'Advanced Piano Chords'],
+        'status': 'scheduled',
+        'notes': 'Virtual session coming up!',
+        'rating': 0,
+        'type': 'virtual',
+      },
+      {
+        'id': 'mock_session_3',
+        'title': 'Juggling Workshop',
+        'partner': 'Frank',
+        'date': nextMonth.toIso8601String(),
+        'time': '15:30',
+        'duration': '1.5 hours',
+        'location': 'City Park',
+        'skills': ['Basic Juggling', 'Hand-Eye Coordination'],
+        'status': 'scheduled',
+        'notes': 'Fun outdoor session coming up!',
+        'rating': 0,
+        'type': 'in-person',
+      },
+      {
+        'id': 'session2_5',
+        'title': 'Code Review & Best Practices',
+        'partner': 'Bob',
+        'date': lastWeek.toIso8601String(),
+        'time': '18:00',
+        'duration': '2 hours',
+        'location': 'Coffee Bean Cafe',
+        'skills': ['Code Quality', 'Git Workflows'],
+        'status': 'completed',
+        'notes': 'Reviewed each other\'s projects. Great feedback and learning experience.',
+        'rating': 5,
+        'type': 'in-person',
+      },
+      {
+        'id': 'session1_3',
+        'title': 'Song Practice Session',
+        'partner': 'Alice',
+        'date': twoWeeksAgo.toIso8601String(),
+        'time': '16:00',
+        'duration': '3 hours',
+        'location': 'Music Room, Community Center',
+        'skills': ['Song Performance', 'Rhythm Coordination'],
+        'status': 'completed',
+        'notes': 'Practiced "Wonderwall" together. Great progress on both instruments!',
+        'rating': 4,
+        'type': 'in-person',
+      },
+      {
+        'id': 'session2_4',
+        'title': 'Advanced Debugging Techniques',
+        'partner': 'Bob',
+        'date': lastMonth.toIso8601String(),
+        'time': '19:30',
+        'duration': '2 hours',
+        'location': 'TechHub Coworking Space',
+        'skills': ['Python Debugging', 'Chrome DevTools'],
+        'status': 'completed',
+        'notes': 'Learned professional debugging workflows. Very practical session.',
+        'rating': 5,
+        'type': 'in-person',
+      },
+      {
+        'id': 'session3_3',
+        'title': 'Final Project Presentation',
+        'partner': 'Carol',
+        'date': oneMonthAgo.toIso8601String(),
+        'time': '16:00',
+        'duration': '2 hours',
+        'location': 'Community Art Gallery',
+        'skills': ['Project Showcase', 'Peer Review'],
+        'status': 'completed',
+        'notes': 'Showcased our final pieces. Both learned so much throughout this exchange!',
+        'rating': 5,
+        'type': 'in-person',
+      },
+      {
+        'id': 'session2_3',
+        'title': 'API Development Workshop',
+        'partner': 'Bob',
+        'date': twoMonthsAgo.toIso8601String(),
+        'time': '20:00',
+        'duration': '2.5 hours',
+        'location': 'Online (Discord)',
+        'skills': ['REST APIs', 'Database Integration'],
+        'status': 'completed',
+        'notes': 'Virtual coding session. Screen sharing made it easy to collaborate.',
+        'rating': 4,
+        'type': 'virtual',
+      },
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -138,6 +183,19 @@ class AllSessionsScreen extends StatelessWidget {
         title: const Text('All Sessions'),
         backgroundColor: theme.cardColor,
         elevation: 0.5,
+        actions: [
+          IconButton(
+            onPressed: _isUpdating ? null : _updateOldSessions,
+            icon: _isUpdating 
+                ? const SizedBox(
+                    width: 16, 
+                    height: 16, 
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh),
+            tooltip: 'Update old sessions to future dates',
+          ),
+        ],
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _sessionService.getBookedSessions(),
@@ -156,9 +214,24 @@ class AllSessionsScreen extends StatelessWidget {
           final bookedSessions = snapshot.data ?? [];
           final allSessions = [...bookedSessions, ..._fallbackMockSessions];
           
+          // Filter out any sessions with past dates if they're marked as scheduled
+          final now = DateTime.now();
+          final filteredSessions = allSessions.where((session) {
+            try {
+              final sessionDate = DateTime.parse(session['date']);
+              // Keep completed sessions regardless of date, but filter scheduled sessions in the past
+              if (session['status'] == 'scheduled' && sessionDate.isBefore(now.subtract(const Duration(days: 1)))) {
+                return false;
+              }
+              return true;
+            } catch (e) {
+              return true; // Keep sessions with invalid dates for debugging
+            }
+          }).toList();
+          
           // Group sessions by status (exclude cancelled sessions)
-          final scheduledSessions = allSessions.where((s) => s['status'] == 'scheduled').toList();
-          final completedSessions = allSessions.where((s) => s['status'] == 'completed').toList();
+          final scheduledSessions = filteredSessions.where((s) => s['status'] == 'scheduled').toList();
+          final completedSessions = filteredSessions.where((s) => s['status'] == 'completed').toList();
           // Note: cancelled sessions are intentionally excluded from both lists
 
           return DefaultTabController(
