@@ -43,7 +43,9 @@ class ProfileAvatar extends StatelessWidget {
             ? NetworkImage(imageUrl!)
             : null,
         onBackgroundImageError: (imageUrl != null && imageUrl!.isNotEmpty)
-            ? (_, _) {}
+            ? (exception, stackTrace) {
+                // Image load failed, will show initials instead
+              }
             : null,
         child: (imageUrl == null || imageUrl!.isEmpty)
             ? Text(

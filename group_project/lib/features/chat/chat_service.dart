@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'models/conversation_preview.dart';
 import 'models/message.dart';
 import 'mock/mock_conversations.dart';
 import '../../services/notification_service.dart';
+import '../../utils/app_logger.dart';
 
 /// Service for managing chat conversations and messages.
 class ChatService {
@@ -61,7 +61,7 @@ class ChatService {
         conversationId: conversationId,
       );
     } catch (e) {
-      debugPrint('Failed to send message notification: $e');
+      AppLogger.error('Failed to send message notification', tag: 'CHAT', error: e);
     }
 
     _sendDummyResponse(conversationId, chatPartnerId);
@@ -112,7 +112,7 @@ class ChatService {
         }, SetOptions(merge: true));
       });
     } catch (e) {
-      debugPrint('Dummy response failed: $e');
+      AppLogger.error('Dummy response failed', tag: 'CHAT', error: e);
     }
   }
 
@@ -174,7 +174,7 @@ class ChatService {
           final message = Message.fromMap(data, doc.id, conversationId);
           messages.add(message);
         } catch (e) {
-          // Error processing message handled silently
+          AppLogger.error('Error processing message', tag: 'CHAT', error: e);
         }
       }
       

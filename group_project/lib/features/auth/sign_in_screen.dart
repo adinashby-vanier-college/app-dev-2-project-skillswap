@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'auth_service.dart';
+import 'auth_exceptions.dart';
 import '../../utils/custom_colors.dart';
 import '../../widgets/custom_button.dart';
-import '../../services/fcm_service.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -38,15 +38,17 @@ class _SignInScreenState extends State<SignInScreen> {
         const SnackBar(content: Text("Signed in successfully")),
       );
       
-      // Initialize FCM after successful sign in
-      FCMService().initialize().catchError((e) {
-        // FCM initialization error handled silently
-      });
-      
       navigator.pushReplacementNamed('/home');
+    } on AuthException catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: e is AuthNetworkException ? Colors.orange : Colors.red,
+        ),
+      );
     } catch (e) {
       scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        SnackBar(content: Text('An unexpected error occurred: ${e.toString()}')),
       );
     } finally {
       if (mounted) {
@@ -72,14 +74,15 @@ class _SignInScreenState extends State<SignInScreen> {
         SnackBar(content: Text("Google sign in: ${user.displayName ?? "Success"}")),
       );
       
-      // Initialize FCM after successful sign in
-      FCMService().initialize().catchError((e) {
-        // FCM initialization error handled silently
-      });
-      
       navigator.pushReplacementNamed('/home');
+    } on AuthException catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: e is AuthSocialException ? Colors.blue : Colors.red,
+        ),
+      );
     } catch (e) {
-      // Google sign-in error handled silently
       scaffoldMessenger.showSnackBar(
         SnackBar(content: Text("Google login failed: ${e.toString()}")),
       );
@@ -108,12 +111,14 @@ class _SignInScreenState extends State<SignInScreen> {
         SnackBar(content: Text("Twitter sign in: ${user.displayName ?? "Success"}")),
       );
       
-      // Initialize FCM after successful sign in
-      FCMService().initialize().catchError((e) {
-        // FCM initialization error handled silently
-      });
-      
       navigator.pushReplacementNamed('/home');
+    } on AuthException catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: e is AuthSocialException ? Colors.blue : Colors.red,
+        ),
+      );
     } catch (e) {
       scaffoldMessenger.showSnackBar(
         SnackBar(content: Text("Twitter login failed: $e")),

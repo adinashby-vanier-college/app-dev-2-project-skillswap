@@ -1,7 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../utils/app_logger.dart';
 
 /// Service for managing Firebase Cloud Messaging.
 class FCMService {
@@ -29,14 +29,14 @@ class FCMService {
         sound: true,
       );
 
-      debugPrint('FCM Permission granted: ${settings.authorizationStatus}');
+      AppLogger.fcm('Permission granted: ${settings.authorizationStatus}');
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional) {
         
         // Get the token
         _token = await _messaging.getToken();
-        debugPrint('FCM Token: $_token');
+        AppLogger.fcm('Token obtained: $_token');
 
         // Save token to user document in Firestore
         await _saveTokenToFirestore();
@@ -58,10 +58,10 @@ class FCMService {
         });
 
       } else {
-        debugPrint('FCM Permission denied');
+        AppLogger.warn('Permission denied', tag: 'FCM');
       }
     } catch (e) {
-      debugPrint('Error initializing FCM: $e');
+      AppLogger.error('Error initializing FCM', tag: 'FCM', error: e);
     }
   }
 
@@ -79,18 +79,18 @@ class FCMService {
         'tokenUpdatedAt': FieldValue.serverTimestamp(),
       });
 
-      debugPrint('FCM token saved to Firestore');
+      AppLogger.fcm('Token saved to Firestore');
     } catch (e) {
-      debugPrint('Error saving FCM token: $e');
+      AppLogger.error('Error saving FCM token', tag: 'FCM', error: e);
     }
   }
 
   // Handle foreground messages
   void _handleForegroundMessage(RemoteMessage message) {
-    debugPrint('Received foreground message: ${message.messageId}');
-    debugPrint('Title: ${message.notification?.title}');
-    debugPrint('Body: ${message.notification?.body}');
-    debugPrint('Data: ${message.data}');
+    AppLogger.fcm('Received foreground message: ${message.messageId}');
+    AppLogger.fcm('Title: ${message.notification?.title}');
+    AppLogger.fcm('Body: ${message.notification?.body}');
+    AppLogger.fcm('Data: ${message.data}');
 
     // You can show a local notification here or update UI
     // For now, we'll just log it
@@ -98,8 +98,8 @@ class FCMService {
 
   // Handle message when app is opened from notification
   void _handleMessageOpenedApp(RemoteMessage message) {
-    debugPrint('Message opened app: ${message.messageId}');
-    debugPrint('Data: ${message.data}');
+    AppLogger.fcm('Message opened app: ${message.messageId}');
+    AppLogger.fcm('Data: ${message.data}');
 
     // Handle navigation based on message data
     final data = message.data;
@@ -111,7 +111,7 @@ class FCMService {
         final conversationId = data['conversationId'];
         if (conversationId != null) {
           // You would navigate to chat screen here
-          debugPrint('Navigate to chat: $conversationId');
+          AppLogger.fcm('Navigate to chat: $conversationId');
         }
         break;
       
@@ -119,7 +119,7 @@ class FCMService {
         // Navigate to matches screen or profile
         final matchId = data['matchId'];
         if (matchId != null) {
-          debugPrint('Navigate to match profile: $matchId');
+          AppLogger.fcm('Navigate to match profile: $matchId');
         }
         break;
       
@@ -127,7 +127,7 @@ class FCMService {
         // Navigate to sessions screen
         final sessionId = data['sessionId'];
         if (sessionId != null) {
-          debugPrint('Navigate to session: $sessionId');
+          AppLogger.fcm('Navigate to session: $sessionId');
         }
         break;
     }
@@ -146,16 +146,16 @@ class FCMService {
       final fcmToken = userDoc.data()?['fcmToken'] as String?;
       
       if (fcmToken == null) {
-        debugPrint('No FCM token found for user: $toUserId');
+        AppLogger.warn('No FCM token found for user: $toUserId', tag: 'FCM');
         return;
       }
 
       // In a real app, you would send this to your backend server
       // which would use the Firebase Admin SDK to send the notification
-      debugPrint('Would send push notification to token: $fcmToken');
-      debugPrint('Title: $title');
-      debugPrint('Body: $body');
-      debugPrint('Data: $data');
+      AppLogger.fcm('Would send push notification to token: $fcmToken');
+      AppLogger.fcm('Title: $title');
+      AppLogger.fcm('Body: $body');
+      AppLogger.fcm('Data: $data');
 
       // For now, we'll just log it since we don't have a backend
       // In production, you would make an HTTP request to your server:
@@ -173,7 +173,7 @@ class FCMService {
       */
 
     } catch (e) {
-      debugPrint('Error sending push notification: $e');
+      AppLogger.error('Error sending push notification', tag: 'FCM', error: e);
     }
   }
 
@@ -181,9 +181,9 @@ class FCMService {
   Future<void> subscribeToTopic(String topic) async {
     try {
       await _messaging.subscribeToTopic(topic);
-      debugPrint('Subscribed to topic: $topic');
+      AppLogger.fcm('Subscribed to topic: $topic');
     } catch (e) {
-      debugPrint('Error subscribing to topic: $e');
+      AppLogger.error('Error subscribing to topic', tag: 'FCM', error: e);
     }
   }
 
@@ -191,9 +191,9 @@ class FCMService {
   Future<void> unsubscribeFromTopic(String topic) async {
     try {
       await _messaging.unsubscribeFromTopic(topic);
-      debugPrint('Unsubscribed from topic: $topic');
+      AppLogger.fcm('Unsubscribed from topic: $topic');
     } catch (e) {
-      debugPrint('Error unsubscribing from topic: $e');
+      AppLogger.error('Error unsubscribing from topic', tag: 'FCM', error: e);
     }
   }
 
@@ -202,7 +202,7 @@ class FCMService {
     try {
       return await _messaging.getToken();
     } catch (e) {
-      debugPrint('Error getting FCM token: $e');
+      AppLogger.error('Error getting FCM token', tag: 'FCM', error: e);
       return null;
     }
   }
@@ -214,7 +214,7 @@ class FCMService {
       return settings.authorizationStatus == AuthorizationStatus.authorized ||
              settings.authorizationStatus == AuthorizationStatus.provisional;
     } catch (e) {
-      debugPrint('Error checking notification settings: $e');
+      AppLogger.error('Error checking notification settings', tag: 'FCM', error: e);
       return false;
     }
   }
@@ -223,8 +223,8 @@ class FCMService {
 // Background message handler (must be top-level function)
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  debugPrint('Handling background message: ${message.messageId}');
-  debugPrint('Title: ${message.notification?.title}');
-  debugPrint('Body: ${message.notification?.body}');
-  debugPrint('Data: ${message.data}');
+  AppLogger.fcm('Handling background message: ${message.messageId}');
+  AppLogger.fcm('Title: ${message.notification?.title}');
+  AppLogger.fcm('Body: ${message.notification?.body}');
+  AppLogger.fcm('Data: ${message.data}');
 }

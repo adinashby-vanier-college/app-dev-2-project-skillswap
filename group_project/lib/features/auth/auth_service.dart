@@ -1,7 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'auth_exceptions.dart';
+import '../../utils/app_logger.dart';
 
 /// Authentication service handling email, social logins, and user management.
 class AuthService {
@@ -17,51 +18,51 @@ class AuthService {
 
   /// Signs in user with email and password.
   Future<User> signInWithEmail(String email, String password) async {
-    debugPrint('[AuthService] signInWithEmail called, email=$email');
+    AppLogger.auth('signInWithEmail called, email=$email');
     try {
       final result = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      debugPrint('[AuthService] Sign in success, uid=${result.user?.uid}');
+      AppLogger.auth('Sign in success, uid=${result.user?.uid}');
       return result.user!;
-    } on FirebaseAuthException catch (e) {
-      debugPrint('[AuthService] FirebaseAuthException: ${e.code} - ${e.message}');
-      rethrow;
     } catch (e) {
-      debugPrint('[AuthService] Unknown error: $e');
-      throw Exception('unknown-error');
+      AppLogger.error('Sign in error', tag: 'AUTH', error: e);
+      throw AuthExceptionMapper.mapFirebaseException(
+        e, 
+        'Failed to sign in. Please check your credentials.'
+      );
     }
   }
 
   /// Creates new user account with email and password.
   Future<User> signUpWithEmail(String email, String password) async {
-    debugPrint('[AuthService] signUpWithEmail called, email=$email');
+    AppLogger.auth('signUpWithEmail called, email=$email');
     try {
       final result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      debugPrint('[AuthService] Sign up success, uid=${result.user?.uid}');
+      AppLogger.auth('Sign up success, uid=${result.user?.uid}');
       return result.user!;
-    } on FirebaseAuthException catch (e) {
-      debugPrint('[AuthService] FirebaseAuthException: ${e.code} - ${e.message}');
-      rethrow;
     } catch (e) {
-      debugPrint('[AuthService] Unknown error: $e');
-      throw Exception('unknown-error');
+      AppLogger.error('Sign up error', tag: 'AUTH', error: e);
+      throw AuthExceptionMapper.mapFirebaseException(
+        e, 
+        'Failed to create account. Please try again.'
+      );
     }
   }
 
   /// Signs out user from all authentication providers.
   Future<void> signOut() async {
-    debugPrint('[AuthService] Signing out from all providers...');
+    AppLogger.auth('Signing out from all providers...');
     if (await _googleSignIn.isSignedIn()) {
       await _googleSignIn.signOut();
     }
     await _facebookAuth.logOut();
     await _auth.signOut();
-    debugPrint('[AuthService] Sign out complete.');
+    AppLogger.auth('Sign out complete.');
   }
 
   User? get currentUser => _auth.currentUser;
@@ -69,10 +70,23 @@ class AuthService {
 
   /// Sends verification email to current signed-in user.
   Future<void> sendEmailVerification() async {
-    final user = _auth.currentUser;
-    if (user == null) throw Exception('No signed-in user');
-    await user.sendEmailVerification();
-    debugPrint('[AuthService] Verification email sent to ${user.email ?? "unknown"}');
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw AuthExceptionMapper.mapFirebaseException(
+          Exception('No signed-in user'),
+          'No user is currently signed in. Please sign in first.'
+        );
+      }
+      await user.sendEmailVerification();
+      AppLogger.auth('Verification email sent to ${user.email ?? "unknown"}');
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthExceptionMapper.mapFirebaseException(
+        e,
+        'Failed to send verification email. Please try again.'
+      );
+    }
   }
 
   /// Reloads user and returns email verification status.
@@ -81,17 +95,20 @@ class AuthService {
     if (user == null) return false;
     await user.reload();
     final refreshed = _auth.currentUser;
-    debugPrint('[AuthService] Email verified status: ${refreshed?.emailVerified}');
+    AppLogger.auth('Email verified status: ${refreshed?.emailVerified}');
     return refreshed?.emailVerified ?? false;
   }
 
   /// Signs in user with Google account.
   Future<User> signInWithGoogle() async {
-    debugPrint('[AuthService] signInWithGoogle called');
+    AppLogger.auth('signInWithGoogle called');
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        throw Exception('google-sign-in-cancelled');
+        throw AuthExceptionMapper.mapFirebaseException(
+          Exception('google-sign-in-cancelled'),
+          'Google sign-in was cancelled.'
+        );
       }
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
@@ -99,56 +116,62 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
       final result = await _auth.signInWithCredential(credential);
-      debugPrint('[AuthService] Google sign in success, uid=${result.user?.uid}');
+      AppLogger.auth('Google sign in success, uid=${result.user?.uid}');
       return result.user!;
-    } on FirebaseAuthException catch (e) {
-      debugPrint('[AuthService] Google sign-in FirebaseAuthException: ${e.code} - ${e.message}');
-      rethrow;
     } catch (e) {
-      debugPrint('[AuthService] Google sign-in error: $e');
-      throw Exception('google-sign-in-error');
+      AppLogger.error('Google sign-in error', tag: 'AUTH', error: e);
+      throw AuthExceptionMapper.mapFirebaseException(
+        e,
+        'Failed to sign in with Google. Please try again.'
+      );
     }
   }
 
   /// Signs in user with Facebook account.
   Future<User> signInWithFacebook() async {
-    debugPrint('[AuthService] signInWithFacebook called');
+    AppLogger.auth('signInWithFacebook called');
     try {
       final LoginResult result = await _facebookAuth.login();
       if (result.status == LoginStatus.cancelled) {
-        throw Exception('facebook-sign-in-cancelled');
+        throw AuthExceptionMapper.mapFirebaseException(
+          Exception('facebook-sign-in-cancelled'),
+          'Facebook sign-in was cancelled.'
+        );
       }
       if (result.status != LoginStatus.success || result.accessToken == null) {
-        throw Exception('facebook-sign-in-failed');
+        throw AuthExceptionMapper.mapFirebaseException(
+          Exception('facebook-sign-in-failed'),
+          'Facebook sign-in failed. Please try again.'
+        );
       }
       final OAuthCredential facebookCredential = 
           FacebookAuthProvider.credential(result.accessToken!.tokenString);
       final userCredential = await _auth.signInWithCredential(facebookCredential);
-      debugPrint('[AuthService] Facebook sign in success, uid=${userCredential.user?.uid}');
+      AppLogger.auth('Facebook sign in success, uid=${userCredential.user?.uid}');
       return userCredential.user!;
-    } on FirebaseAuthException catch (e) {
-      debugPrint('[AuthService] Facebook sign-in FirebaseAuthException: ${e.code} - ${e.message}');
-      rethrow;
     } catch (e) {
-      debugPrint('[AuthService] Facebook sign-in error: $e');
-      throw Exception('facebook-sign-in-error');
+      AppLogger.error('Facebook sign-in error', tag: 'AUTH', error: e);
+      throw AuthExceptionMapper.mapFirebaseException(
+        e,
+        'Failed to sign in with Facebook. Please try again.'
+      );
     }
   }
 
   /// Signs in user with X (Twitter) account.
   Future<User> signInWithTwitter() async {
-    debugPrint('[AuthService] signInWithTwitter called');
+    AppLogger.auth('signInWithTwitter called');
     try {
       final twitterProvider = TwitterAuthProvider();
       final result = await _auth.signInWithProvider(twitterProvider);
-      debugPrint('[AuthService] Twitter sign in success, uid=${result.user?.uid}');
+      AppLogger.auth('Twitter sign in success, uid=${result.user?.uid}');
       return result.user!;
-    } on FirebaseAuthException catch (e) {
-      debugPrint('[AuthService] Twitter sign-in FirebaseAuthException: ${e.code} - ${e.message}');
-      rethrow;
     } catch (e) {
-      debugPrint('[AuthService] Twitter sign-in error: $e');
-      throw Exception('twitter-sign-in-error');
+      AppLogger.error('Twitter sign-in error', tag: 'AUTH', error: e);
+      throw AuthExceptionMapper.mapFirebaseException(
+        e,
+        'Failed to sign in with Twitter. Please try again.'
+      );
     }
   }
 

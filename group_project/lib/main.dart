@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'features/auth/sign_up_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/chat/conversations_screen.dart';
 import 'features/chat/archived_chats_screen.dart';
+import 'services/fcm_service.dart';
 
 /// Background handler for Firebase messages (must be top-level).
 @pragma('vm:entry-point')
@@ -20,6 +22,11 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  
+  // Initialize FCM once at app startup
+  FCMService().initialize().catchError((e) {
+    // FCM initialization failed, app can continue without notifications
+  });
   
   runApp(const SkillSwapApp());
 }
@@ -47,7 +54,7 @@ class SkillSwapApp extends StatelessWidget {
               useMaterial3: true,
             ),
             debugShowCheckedModeBanner: false,
-            home: const SignInScreen(),
+            home: const AuthGate(),
             routes: {
               '/signIn': (context) => const SignInScreen(),
               '/signUp': (context) => const SignUpScreen(),
@@ -62,27 +69,24 @@ class SkillSwapApp extends StatelessWidget {
   }
 }
 
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
 
-// class AuthGate extends StatelessWidget {
-//   const AuthGate({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return StreamBuilder<User?>(
-//       stream: FirebaseAuth.instance.authStateChanges(),
-//       builder: (context, snapshot) {
-//         if (snapshot.connectionState == ConnectionState.waiting) {
-//           return const Scaffold(
-//             body: Center(child: CircularProgressIndicator()),
-//           );
-//         }
-//         if (snapshot.hasData) {
-//           // Logged in → HomeScreen
-//           return const HomeScreen();
-//         }
-//         // Not logged in → SignInScreen
-//         return const SignInScreen();
-//       },
-//     );
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasData) {
+          return const HomeScreen();
+        }
+        return const SignInScreen();
+      },
+    );
+  }
+}

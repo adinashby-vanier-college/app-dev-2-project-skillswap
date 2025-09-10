@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_service.dart';
+import 'auth_exceptions.dart';
 import 'verify_email_screen.dart';
 
 /// Screen for user registration with email and password.
@@ -69,23 +69,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
           builder: (_) => VerifyEmailScreen(email: email),
         ),
       );
-    } on FirebaseAuthException catch (e) {
-      String message;
-      if (e.code == 'email-already-in-use') {
-        message = 'This email is already registered. Please sign in instead.';
-      } else {
-        message = e.message ?? 'An unexpected error occurred. Please try again.';
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
-      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: e is AuthNetworkException ? Colors.orange : Colors.red,
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        SnackBar(content: Text('An unexpected error occurred: ${e.toString()}')),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
