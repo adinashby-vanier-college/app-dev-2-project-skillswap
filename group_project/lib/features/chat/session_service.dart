@@ -3,18 +3,18 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'models/session_proposal.dart';
 
+/// Service for managing skill-sharing session proposals and bookings.
 class SessionService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   String? get currentUserId => _auth.currentUser?.uid;
 
-  // List of mock users for auto-acceptance
   static const List<String> mockUsers = [
     'Alice', 'Bob', 'Carol', 'Dave', 'Eve', 'Frank', 'Grace', 'Hank'
   ];
 
-  // Create a new session proposal
+  /// Creates a new session proposal.
   Future<String> createSessionProposal({
     required String conversationId,
     required String recipientId,
@@ -61,7 +61,6 @@ class SessionService {
 
       debugPrint('Proposal created with ID: ${docRef.id}');
 
-      // Send a system message to the chat about the proposal
       try {
         await _sendProposalMessage(
           conversationId: conversationId,
@@ -71,10 +70,8 @@ class SessionService {
         debugPrint('Proposal message sent successfully');
       } catch (e) {
         debugPrint('Failed to send proposal message: $e');
-        // Don't throw here, the proposal was still created
       }
 
-      // Auto-accept for mock users (for debugging purposes)
       debugPrint('Checking recipient ID: $recipientId against mock users: $mockUsers');
       if (mockUsers.contains(recipientId)) {
         debugPrint('Auto-accepting proposal for mock user: $recipientId');
@@ -90,7 +87,7 @@ class SessionService {
     }
   }
 
-  // Get session proposals for a conversation
+  /// Gets session proposals for a conversation.
   Stream<List<SessionProposal>> getSessionProposals(String conversationId) {
     return _firestore
         .collection('session_proposals')
@@ -101,14 +98,13 @@ class SessionService {
           .map((doc) => SessionProposal.fromMap(doc.data(), doc.id))
           .toList();
       
-      // Sort in memory instead of using orderBy to avoid index requirement
       proposals.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       
       return proposals;
     });
   }
 
-  // Respond to a session proposal
+  /// Responds to a session proposal.
   Future<void> respondToProposal(String proposalId, bool accept) async {
     if (currentUserId == null) throw Exception('User not authenticated');
 
@@ -122,7 +118,6 @@ class SessionService {
       'respondedAt': Timestamp.fromDate(DateTime.now()),
     });
 
-    // If accepted, create a booked session
     if (accept) {
       final proposalDoc = await _firestore
           .collection('session_proposals')
@@ -133,7 +128,6 @@ class SessionService {
         final proposal = SessionProposal.fromMap(proposalDoc.data()!, proposalId);
         await _createBookedSession(proposal);
         
-        // Send acceptance message
         await _sendResponseMessage(
           conversationId: proposal.conversationId,
           proposalId: proposalId,
@@ -142,7 +136,6 @@ class SessionService {
         );
       }
     } else {
-      // Send decline message
       final proposalDoc = await _firestore
           .collection('session_proposals')
           .doc(proposalId)
@@ -160,11 +153,10 @@ class SessionService {
     }
   }
 
-  // Cancel a session proposal (only by proposer)
+  /// Cancels a session proposal (only by proposer).
   Future<void> cancelProposal(String proposalId) async {
     if (currentUserId == null) throw Exception('User not authenticated');
 
-    // Get the proposal to verify the current user is the proposer
     final proposalDoc = await _firestore
         .collection('session_proposals')
         .doc(proposalId)
@@ -184,7 +176,6 @@ class SessionService {
       throw Exception('Can only cancel pending proposals');
     }
 
-    // Update proposal status to cancelled
     await _firestore
         .collection('session_proposals')
         .doc(proposalId)
@@ -193,7 +184,6 @@ class SessionService {
       'respondedAt': Timestamp.fromDate(DateTime.now()),
     });
 
-    // Send cancellation message
     await _sendCancellationMessage(
       conversationId: proposal.conversationId,
       proposalId: proposalId,
@@ -201,7 +191,7 @@ class SessionService {
     );
   }
 
-  // Create a booked session from an accepted proposal
+  /// Creates a booked session from an accepted proposal.
   Future<void> _createBookedSession(SessionProposal proposal) async {
     final sessionId = _firestore.collection('booked_sessions').doc().id;
     final session = {
@@ -228,7 +218,7 @@ class SessionService {
         .set(session);
   }
 
-  // Send a system message about the proposal
+  /// Sends a system message about the proposal.
   Future<void> _sendProposalMessage({
     required String conversationId,
     required String proposalId,
@@ -254,11 +244,9 @@ class SessionService {
       
       // Update both message and conversation metadata in a transaction
       await _firestore.runTransaction((transaction) async {
-        // Add the message
         final messageRef = convoRef.collection('messages').doc();
         transaction.set(messageRef, messageData);
         
-        // Update conversation metadata
         transaction.update(convoRef, {
           'lastMessage': messageText,
           'lastMessageTime': Timestamp.fromDate(now),
@@ -273,7 +261,7 @@ class SessionService {
     }
   }
 
-  // Send a response message
+  /// Sends a response message.
   Future<void> _sendResponseMessage({
     required String conversationId,
     required String proposalId,
@@ -287,9 +275,7 @@ class SessionService {
 
     final convoRef = _firestore.collection('conversations').doc(conversationId);
     
-    // Update both message and conversation metadata in a transaction
     await _firestore.runTransaction((transaction) async {
-      // Add the message
       final messageRef = convoRef.collection('messages').doc();
       transaction.set(messageRef, {
         'text': messageText,
@@ -301,7 +287,6 @@ class SessionService {
         'accepted': accepted,
       });
       
-      // Update conversation metadata
       transaction.update(convoRef, {
         'lastMessage': messageText,
         'lastMessageTime': Timestamp.fromDate(now),
@@ -310,7 +295,7 @@ class SessionService {
     });
   }
 
-  // Send a cancellation message
+  /// Sends a cancellation message.
   Future<void> _sendCancellationMessage({
     required String conversationId,
     required String proposalId,
@@ -321,9 +306,7 @@ class SessionService {
 
     final convoRef = _firestore.collection('conversations').doc(conversationId);
     
-    // Update both message and conversation metadata in a transaction
     await _firestore.runTransaction((transaction) async {
-      // Add the message
       final messageRef = convoRef.collection('messages').doc();
       transaction.set(messageRef, {
         'text': messageText,
@@ -334,7 +317,6 @@ class SessionService {
         'proposalId': proposalId,
       });
       
-      // Update conversation metadata
       transaction.update(convoRef, {
         'lastMessage': messageText,
         'lastMessageTime': Timestamp.fromDate(now),
@@ -343,7 +325,7 @@ class SessionService {
     });
   }
 
-  // Get booked sessions for a user
+  /// Gets booked sessions for the current user.
   Stream<List<Map<String, dynamic>>> getBookedSessions() {
     if (currentUserId == null) return Stream.value([]);
 
@@ -357,7 +339,6 @@ class SessionService {
         final data = doc.data();
         data['id'] = doc.id;
         
-        // Auto-update past scheduled sessions to completed for debugging
         _autoCompleteOldSessions(doc.id, data);
         
         return data;
@@ -367,7 +348,7 @@ class SessionService {
     });
   }
   
-  // Auto-complete old sessions for debugging purposes
+  /// Auto-completes old sessions for debugging purposes.
   void _autoCompleteOldSessions(String sessionId, Map<String, dynamic> sessionData) async {
     if (sessionData['status'] != 'scheduled') return;
     
@@ -375,30 +356,28 @@ class SessionService {
       final sessionDate = DateTime.parse(sessionData['date']);
       final now = DateTime.now();
       
-      // If session is more than 1 day old, mark as completed
       if (now.difference(sessionDate).inDays > 1) {
         await _firestore
             .collection('booked_sessions')
             .doc(sessionId)
             .update({
           'status': 'completed',
-          'rating': 4 + (DateTime.now().millisecond % 2), // Random rating 4-5
+          'rating': 4 + (DateTime.now().millisecond % 2),
           'notes': 'Session completed successfully!',
         });
         
         debugPrint('Auto-completed old session: $sessionId');
       }
     } catch (e) {
-      // Ignore date parsing errors
+      debugPrint('Error auto-completing session: $e');
     }
   }
 
-  // Auto-accept proposal for mock users
+  /// Auto-accepts proposal for mock users.
   Future<void> _autoAcceptProposal(String proposalId, String mockUserId) async {
-    await Future.delayed(Duration(seconds: 2)); // Simulate thinking time
+    await Future.delayed(Duration(seconds: 2));
     
     try {
-      // First check if proposal is still pending (might have been cancelled)
       final proposalDoc = await _firestore
           .collection('session_proposals')
           .doc(proposalId)
@@ -411,7 +390,6 @@ class SessionService {
 
       final proposal = SessionProposal.fromMap(proposalDoc.data()!, proposalId);
       
-      // Only auto-accept if still pending
       if (proposal.status != SessionProposalStatus.pending) {
         debugPrint('Proposal $proposalId is no longer pending (status: ${proposal.status}), skipping auto-accept');
         return;
@@ -425,10 +403,8 @@ class SessionService {
         'respondedAt': Timestamp.fromDate(DateTime.now()),
       });
 
-      // Create a booked session
       await _createBookedSession(proposal);
       
-      // Send acceptance message
       await _sendResponseMessage(
         conversationId: proposal.conversationId,
         proposalId: proposalId,
@@ -442,7 +418,7 @@ class SessionService {
     }
   }
 
-  // Cancel a booked session
+  /// Cancels a booked session.
   Future<void> cancelBookedSession(String sessionId) async {
     if (currentUserId == null) throw Exception('User not authenticated');
 
@@ -461,7 +437,7 @@ class SessionService {
     }
   }
 
-  // Get user name helper
+  /// Gets user name helper.
   Future<String> _getUserName(String userId) async {
     try {
       final userDoc = await _firestore

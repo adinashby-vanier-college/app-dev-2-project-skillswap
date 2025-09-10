@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'sessions_screen.dart';
 import '../profile/view_profile_screen.dart';
 
+/// Screen displaying user's match history.
 class MatchHistoryScreen extends StatelessWidget {
   const MatchHistoryScreen({super.key});
 

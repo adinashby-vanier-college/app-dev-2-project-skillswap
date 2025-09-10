@@ -10,7 +10,7 @@ import 'features/chat/conversations_screen.dart';
 import 'features/chat/archived_chats_screen.dart';
 import 'services/fcm_service.dart';
 
-// Background message handler (must be top-level)
+/// Background handler for Firebase messages (must be top-level).
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -23,8 +23,6 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  
-  // Set up background message handler
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   
   runApp(const SkillSwapApp());

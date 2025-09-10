@@ -4,6 +4,7 @@ import '../../services/fcm_service.dart';
 import '../../services/notification_service.dart';
 import 'models/notification_model.dart';
 
+/// Screen for testing Firebase Cloud Messaging functionality.
 class FCMTestScreen extends StatefulWidget {
   const FCMTestScreen({super.key});
 

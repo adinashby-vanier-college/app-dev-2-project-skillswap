@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'session_detail_screen.dart';
 import '../chat/session_service.dart';
 
+/// Screen displaying all booked sessions for the user.
 class AllSessionsScreen extends StatelessWidget {
   const AllSessionsScreen({super.key});
 

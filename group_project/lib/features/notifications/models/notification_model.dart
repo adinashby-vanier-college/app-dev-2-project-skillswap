@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Types of notifications in the app.
 enum NotificationType {
   newMatch,
   newMessage,
@@ -9,6 +10,7 @@ enum NotificationType {
   general,
 }
 
+/// Model representing a user notification.
 class NotificationModel {
   final String id;
   final String userId;

@@ -1,15 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
+/// Model representing a chat message.
 class Message {
-  final String id;             // Firestore doc ID (auto-generated)
-  final String senderId;       // ID of the message sender
-  final String? receiverId;     // ID of the message receiver (null for system messages)
-  final String text;           // Message text content
-  final DateTime timestamp;    // When the message was sent
-  final bool isRead;           // Has the receiver read this message?
-  final String conversationId; // ID of the conversation this message belongs to (not stored in Firestore)
-  final bool isDeleted;        // Is the message deleted?
+  final String id;
+  final String senderId;
+  final String? receiverId;
+  final String text;
+  final DateTime timestamp;
+  final bool isRead;
+  final String conversationId;
+  final bool isDeleted;
 
   Message({
     required this.id,
@@ -22,16 +23,9 @@ class Message {
     this.isDeleted = false,
   });
 
+  /// Creates a Message from Firestore data.
   factory Message.fromMap(Map<String, dynamic> data, String documentId, String convoId) {
     try {
-      // Debug print to see what data we're getting
-      debugPrint('Message.fromMap - data keys: ${data.keys.toList()}');
-      debugPrint('Message.fromMap - senderId: ${data['senderId']}');
-      debugPrint('Message.fromMap - receiverId: ${data['receiverId']}');
-      debugPrint('Message.fromMap - text: ${data['text']}');
-      debugPrint('Message.fromMap - timestamp: ${data['timestamp']}');
-      
-      // Validate required fields
       final senderId = data['senderId'];
       if (senderId == null) {
         throw Exception('Message missing senderId field');
@@ -59,7 +53,7 @@ class Message {
       return Message(
         id: documentId,
         senderId: senderId.toString(),
-        receiverId: data['receiverId']?.toString(), // Can be null for system messages
+        receiverId: data['receiverId']?.toString(),
         text: text.toString(),
         timestamp: timestamp,
         isRead: data['isRead'] ?? false,
@@ -73,6 +67,7 @@ class Message {
     }
   }
 
+  /// Converts the Message to a map for Firestore.
   Map<String, dynamic> toMap() {
     final map = <String, dynamic>{
       'senderId': senderId,

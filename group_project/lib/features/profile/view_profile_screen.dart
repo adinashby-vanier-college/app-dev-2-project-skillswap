@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../chat/chat_screen.dart';
 import '../../widgets/profile_avatar.dart';
 
+/// Screen for viewing another user's profile.
 class ViewProfileScreen extends StatelessWidget {
   final String userId;
 
@@ -15,7 +16,7 @@ class ViewProfileScreen extends StatelessWidget {
     return doc.data();
   }
 
-  // helper to generate stable conversation id
+  /// Generates stable conversation ID from two user IDs.
   String generateConversationId(String uid1, String uid2) {
     final sorted = [uid1, uid2]..sort();
     return "${sorted[0]}_${sorted[1]}";
@@ -47,7 +48,6 @@ class ViewProfileScreen extends StatelessWidget {
           
           return CustomScrollView(
             slivers: [
-              // Hero Header with Profile Photo
               SliverAppBar(
                 expandedHeight: 200,
                 pinned: true,
@@ -109,14 +109,12 @@ class ViewProfileScreen extends StatelessWidget {
                 ),
               ),
               
-              // Profile Content
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Bio Section
                       _buildInfoCard(
                         context,
                         title: "About",
@@ -136,7 +134,6 @@ class ViewProfileScreen extends StatelessWidget {
                       
                       const SizedBox(height: 16),
                       
-                      // Skills I Can Teach
                       _buildSkillsCard(
                         context,
                         title: "Skills I Can Teach",
@@ -147,7 +144,6 @@ class ViewProfileScreen extends StatelessWidget {
                       
                       const SizedBox(height: 16),
                       
-                      // Skills I Want to Learn
                       _buildSkillsCard(
                         context,
                         title: "Skills I Want to Learn",
@@ -158,7 +154,6 @@ class ViewProfileScreen extends StatelessWidget {
                       
                       const SizedBox(height: 24),
                       
-                      // Start Chat Button
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
@@ -371,7 +366,6 @@ class ViewProfileScreen extends StatelessWidget {
       final lat = location['latitude'];
       final lng = location['longitude'];
       if (lat != null && lng != null) {
-        // For privacy, just show a general area instead of exact coordinates
         return "Montreal Area";
       }
     }

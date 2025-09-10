@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+/// Screen for editing user's skills (have/want).
 class EditSkillsScreen extends StatefulWidget {
   const EditSkillsScreen({super.key});
 
@@ -34,7 +35,6 @@ class _EditSkillsScreenState extends State<EditSkillsScreen> {
       if (doc.exists) {
         final data = doc.data() ?? {};
         setState(() {
-          // Handle both old format (string) and new format (array)
           final skillsHaveData = data['skillsHave'];
           final skillsWantData = data['skillsWant'];
           
@@ -144,7 +144,6 @@ class _EditSkillsScreenState extends State<EditSkillsScreen> {
         ),
         const SizedBox(height: 12),
         
-        // Add skill input
         Row(
           children: [
             Expanded(
@@ -183,7 +182,6 @@ class _EditSkillsScreenState extends State<EditSkillsScreen> {
         ),
         const SizedBox(height: 12),
         
-        // Skills chips
         if (skills.isNotEmpty)
           Wrap(
             children: skills.map((skill) => 
@@ -247,7 +245,6 @@ class _EditSkillsScreenState extends State<EditSkillsScreen> {
               ),
               const SizedBox(height: 30),
 
-              // Skills I Have Section
               _buildSkillSection(
                 "Skills I Have",
                 _skillsHave,
@@ -257,7 +254,6 @@ class _EditSkillsScreenState extends State<EditSkillsScreen> {
               
               const SizedBox(height: 30),
 
-              // Skills I Want to Learn Section
               _buildSkillSection(
                 "Skills I Want to Learn",
                 _skillsWant,
@@ -278,7 +274,6 @@ class _EditSkillsScreenState extends State<EditSkillsScreen> {
 
               const SizedBox(height: 40),
 
-              // Save button
               SizedBox(
                 width: double.infinity,
                 height: 50,

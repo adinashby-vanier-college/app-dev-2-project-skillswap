@@ -7,12 +7,13 @@ import '../chat/chat_screen.dart';
 import '../chat/chat_service.dart';
 import 'map_screen.dart';
 
-// Utility to generate a stable conversation ID between two users
+/// Utility to generate a stable conversation ID between two users.
 String generateConversationId(String uid1, String uid2) {
   final sorted = [uid1, uid2]..sort();
   return "${sorted[0]}_${sorted[1]}";
 }
 
+/// Screen for discovering and matching with other users.
 class MatchesScreen extends StatefulWidget {
   final String? searchQuery;
   

@@ -6,15 +6,14 @@ import 'models/message.dart';
 import 'mock/mock_conversations.dart';
 import '../../services/notification_service.dart';
 
+/// Service for managing chat conversations and messages.
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final NotificationService _notificationService = NotificationService();
 
   String get currentUserId => FirebaseAuth.instance.currentUser!.uid;
 
-  // -------------------------
-  // SEND MESSAGE
-  // -------------------------
+  /// Sends a message to a conversation and triggers auto-response.
   Future<void> sendMessage(String conversationId, String text) async {
     final convoRef = _firestore.collection('conversations').doc(conversationId);
     final messagesRef = convoRef.collection('messages').doc();
@@ -47,11 +46,10 @@ class ChatService {
           currentUserId: 'active',
           chatPartnerId: 'active',
         },
-        'lastMessageDeleted': false, // Reset deletion flag on new message
+        'lastMessageDeleted': false,
       }, SetOptions(merge: true));
     });
 
-    // Send notification to chat partner
     try {
       final currentUserDoc = await _firestore.collection('users').doc(currentUserId).get();
       final currentUserName = currentUserDoc.data()?['name'] ?? 'Someone';
@@ -66,13 +64,11 @@ class ChatService {
       debugPrint('Failed to send message notification: $e');
     }
 
-    // Add dummy auto-response for testing
     _sendDummyResponse(conversationId, chatPartnerId);
   }
 
-  // Dummy auto-response system for testing
+  /// Generates dummy auto-responses for testing conversations.
   void _sendDummyResponse(String conversationId, String chatPartnerId) async {
-    // Wait 2-5 seconds before responding
     await Future.delayed(Duration(seconds: 2 + (DateTime.now().millisecond % 4)));
     
     final responses = [
@@ -116,14 +112,11 @@ class ChatService {
         }, SetOptions(merge: true));
       });
     } catch (e) {
-      // Ignore errors in dummy responses
       debugPrint('Dummy response failed: $e');
     }
   }
 
-  // -------------------------
-  // GET CONVERSATIONS
-  // -------------------------
+  /// Returns stream of user's conversations, optionally including archived ones.
   Stream<List<ConversationPreview>> getConversations({bool includeArchived = false}) {
     Query q = _firestore
         .collection('conversations')
@@ -137,26 +130,17 @@ class ChatService {
 
       if (data == null) return null;
 
-      // Validate participants
       final participantsList = data['participants'] as List<dynamic>?;
       if (participantsList == null || participantsList.isEmpty) return null;
       
       final participants = List<String>.from(participantsList);
-      
-      // Must have exactly 2 participants and current user must be one of them
       if (participants.length != 2 || !participants.contains(currentUserId)) return null;
       
-      // Get the other participant
       final otherParticipant = participants.firstWhere((id) => id != currentUserId);
-      
-      // Skip conversations with invalid participant IDs
       if (otherParticipant.isEmpty || otherParticipant == 'Unknown') return null;
 
       final unreadCountsMap = data['unreadCounts'] as Map<String, dynamic>?;
-
-      // Get last message
       String lastMessage = data['lastMessage'] ?? '';
-      // Check if last message is deleted
       if (data['lastMessageDeleted'] == true) {
         lastMessage = 'message was deleted';
       }
@@ -173,15 +157,13 @@ class ChatService {
     }).where((conv) => conv != null).cast<ConversationPreview>().toList());
   }
 
-  // -------------------------
-  // GET MESSAGES
-  // -------------------------
+  /// Returns stream of messages for a conversation in descending order.
   Stream<List<Message>> getMessages(String conversationId) {
     final messagesRef = _firestore
         .collection('conversations')
         .doc(conversationId)
         .collection('messages')
-        .orderBy('timestamp', descending: true);  // Changed to descending order
+        .orderBy('timestamp', descending: true);
 
     return messagesRef.snapshots().map((snapshot) {
       final messages = <Message>[];
@@ -196,7 +178,6 @@ class ChatService {
         } catch (e) {
           debugPrint('Error processing message ${doc.id}: $e');
           debugPrint('Message data: ${doc.data()}');
-          // Skip this message and continue with others
         }
       }
       
@@ -204,16 +185,17 @@ class ChatService {
     });
   }
 
+  /// Marks all messages in conversation as read for current user.
   Future<void> markMessagesRead(String conversationId) async {
     final convoRef = _firestore.collection('conversations').doc(conversationId);
     await convoRef.set({'unreadCounts': {currentUserId: 0}}, SetOptions(merge: true));
   }
 
+  /// Soft deletes a message and updates conversation if it's the last message.
   Future<void> deleteMessage(String conversationId, String messageId) async {
     final convoRef = _firestore.collection('conversations').doc(conversationId);
     final messageRef = convoRef.collection('messages').doc(messageId);
 
-    // Get the message to be deleted
     final messageSnap = await messageRef.get();
     if (!messageSnap.exists) {
       await messageRef.delete();
@@ -222,7 +204,6 @@ class ChatService {
     final messageData = messageSnap.data() as Map<String, dynamic>;
     final deletedTimestamp = messageData['timestamp'];
 
-    // Get the last message in the conversation
     final messagesSnap = await convoRef.collection('messages')
       .orderBy('timestamp', descending: true)
       .limit(1)
@@ -234,13 +215,11 @@ class ChatService {
       isLastMessage = lastMsgDoc.id == messageId;
     }
 
-    // Soft delete: set isDeleted and text to ''
     await messageRef.update({
       'isDeleted': true,
       'text': '',
     });
 
-    // If this is the last message, update conversation metadata
     if (isLastMessage) {
       await convoRef.set({
         'lastMessageDeleted': true,
@@ -250,6 +229,7 @@ class ChatService {
     }
   }
 
+  /// Permanently deletes conversation and all its messages.
   Future<void> deleteConversation(String convoId) async {
     final convoRef = _firestore.collection('conversations').doc(convoId);
     final messagesSnapshot = await convoRef.collection('messages').get();
@@ -262,27 +242,24 @@ class ChatService {
     await batch.commit();
   }
 
+  /// Archives or unarchives a conversation.
   Future<void> archiveConversation(String convoId, {bool archive = true}) async {
     final convoRef = _firestore.collection('conversations').doc(convoId);
     await convoRef.set({'archived': archive}, SetOptions(merge: true));
   }
 
-  // -------------------------
-  // INITIALIZE CONVERSATION
-  // -------------------------
+  /// Creates a new empty conversation if it doesn't exist.
   Future<void> initializeConversation(String conversationId) async {
     final convoRef = _firestore.collection('conversations').doc(conversationId);
     
-    // Check if conversation already exists
     final doc = await convoRef.get();
-    if (doc.exists) return; // Conversation already exists
+    if (doc.exists) return;
     
     final participants = conversationId.split('_');
     if (!participants.contains(currentUserId)) {
       throw Exception('Current user is not part of this conversation');
     }
     
-    // Create empty conversation document
     await convoRef.set({
       'participants': participants,
       'lastMessage': '',
@@ -298,14 +275,11 @@ class ChatService {
     });
   }
 
-  // -------------------------
-  // CREATE MOCK CONVERSATIONS
-  // -------------------------
+  /// Creates all mock conversations for testing purposes.
   Future<void> createAllMockConversations() async {
-    // Start from 2 hours ago to ensure mock chats appear earlier
     final baseTime = DateTime.now().subtract(const Duration(hours: 2));
 
-    // First, delete all existing conversations
+    // Delete existing conversations
     final existingConvos = await _firestore
         .collection('conversations')
         .where('participants', arrayContains: currentUserId)
@@ -315,11 +289,9 @@ class ChatService {
       await deleteConversation(doc.id);
     }
 
-    // Process each mock conversation
     for (int i = 0; i < mockConversations.length; i++) {
       final convo = mockConversations[i];
 
-      // Replace "You" with current user ID in participants
       final participants = (convo['participants'] as List<dynamic>)
           .map((p) => p == 'You' ? currentUserId : p)
           .toList();
@@ -329,8 +301,6 @@ class ChatService {
       final messagesRef = convoRef.collection('messages');
       final messages = List<Map<String, String>>.from(convo['messages']);
 
-      // Create messages with timestamps 5 minutes apart for each conversation
-      // Each conversation starts 10 minutes after the previous one
       final convoStartTime = baseTime.add(Duration(minutes: i * 10));
 
       for (int j = 0; j < messages.length; j++) {
@@ -347,7 +317,6 @@ class ChatService {
         });
       }
 
-      // Set conversation metadata
       await convoRef.set({
         'participants': participants,
         'lastMessage': messages.last['text'],
@@ -361,16 +330,18 @@ class ChatService {
     }
   }
 
-  // Remove unused methods
+  /// Legacy method for compatibility.
   Future<void> createFixedMockConversations() async {
     await createAllMockConversations();
   }
 
+  /// Legacy method for compatibility.
   Future<void> createSingleMockConversation(Map<String, dynamic> convo) async {
     await createAllMockConversations();
   }
 
+  /// Legacy method for compatibility.
   Map<String, dynamic>? getNextMockConversation() {
-    return mockConversations[0];  // Just return any conversation, we'll create them all anyway
+    return mockConversations[0];
   }
 }

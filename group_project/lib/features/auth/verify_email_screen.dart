@@ -4,6 +4,7 @@ import 'auth_service.dart';
 import '../home/home_screen.dart';
 import 'sign_in_screen.dart';
 
+/// Screen for email verification after user registration.
 class VerifyEmailScreen extends StatefulWidget {
   final String? email;
   const VerifyEmailScreen({super.key, this.email});

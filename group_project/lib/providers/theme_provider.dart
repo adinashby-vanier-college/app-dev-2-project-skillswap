@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Provider for managing app theme settings.
 class ThemeProvider with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
 

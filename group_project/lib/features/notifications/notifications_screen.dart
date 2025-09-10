@@ -4,6 +4,7 @@ import 'models/notification_model.dart';
 import '../chat/chat_screen.dart';
 import '../profile/view_profile_screen.dart';
 
+/// Screen displaying user notifications.
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 

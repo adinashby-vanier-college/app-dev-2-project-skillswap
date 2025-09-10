@@ -5,6 +5,7 @@ import 'chat_service.dart';
 import 'chat_screen.dart';
 import '../../../widgets/profile_avatar.dart';
 
+/// Screen displaying user's archived conversations.
 class ArchivedChatsScreen extends StatefulWidget {
   const ArchivedChatsScreen({super.key});
 
@@ -87,7 +88,6 @@ class _ArchivedChatsScreenState extends State<ArchivedChatsScreen> {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
-          // Filter only archived conversations
           final archivedConvos = snapshot.data
               ?.where((conv) => conv.isArchived == true)
               .toList() ??
@@ -126,7 +126,6 @@ class _ArchivedChatsScreenState extends State<ArchivedChatsScreen> {
                     return ListTile(
                       leading: ProfileAvatar(
                         displayName: userName,
-                        // imageUrl: null, // If you have a photo URL, pass it here
                       ),
                       title: Text('Chat with $userName'),
                       subtitle: Text(

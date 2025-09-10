@@ -1,7 +1,3 @@
-// lib/features/edit_profile_screen.dart
-// Final Edit Profile screen with avatar picker, validation, Firebase Auth/Firestore/Storage integration.
-// Comments are in English only (as requested).
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -12,6 +8,7 @@ import 'package:geocoding/geocoding.dart';
 import '../../utils/custom_colors.dart';
 
 
+/// Screen for editing user profile information.
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -22,27 +19,23 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
   final _nameCtrl = TextEditingController();
-  final _emailCtrl = TextEditingController(); // read-only (from Auth)
+  final _emailCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
   final _locationCtrl = TextEditingController();
 
-  // State
   bool _loading = false;
   bool _initializing = true;
   bool _dirty = false; // track if user changed anything
   File? _avatarFile;
   String? _avatarUrl; // existing photoURL if any
 
-  // Common getters
   User get _user => FirebaseAuth.instance.currentUser!;
 
   @override
   void initState() {
     super.initState();
     _loadProfile();
-    // mark dirty when user edits fields
     _nameCtrl.addListener(_markDirty);
     _bioCtrl.addListener(_markDirty);
     _locationCtrl.addListener(_markDirty);
@@ -67,7 +60,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _emailCtrl.text = _user.email ?? '';
       _avatarUrl = _user.photoURL;
 
-      // Load from Firestore (users/{uid})
       final doc =
       await FirebaseFirestore.instance.collection('users').doc(uid).get();
 
@@ -90,7 +82,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _pickAvatar() async {
     final theme = Theme.of(context);
-    // return 'gallery' | 'camera' | 'remove'
     final choice = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
@@ -124,7 +115,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     if (!mounted || choice == null) return;
 
-    // handle remove
     if (choice == 'remove') {
       setState(() {
         _avatarFile = null;
@@ -134,7 +124,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
-    // pick image
     final picker = ImagePicker();
     final source = choice == 'camera' ? ImageSource.camera : ImageSource.gallery;
     final picked = await picker.pickImage(source: source, imageQuality: 85);
@@ -148,10 +137,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
 
   Future<String?> _uploadAvatarIfNeeded(String uid) async {
-    // If user removed photo and no new file -> clear photo
     if (_avatarFile == null && _avatarUrl == null) {
       try {
-        // Optional: delete previous storage file (best-effort)
         final ref =
         FirebaseStorage.instance.ref('users/$uid/avatar.jpg');
         await ref.delete().catchError((_) {});
@@ -178,14 +165,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       final uid = _user.uid;
 
-      // Upload avatar if needed
       final newPhotoUrl = await _uploadAvatarIfNeeded(uid);
 
-      // Update Firebase Auth profile (displayName, photoURL)
       await _user.updateDisplayName(_nameCtrl.text.trim());
       await _user.updatePhotoURL(newPhotoUrl);
 
-      // Prepare Firestore payload
       String location = _locationCtrl.text.trim();
       double? lat;
       double? lng;
@@ -237,10 +221,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-// Delete account method
   Future<void> _deleteAccount() async {
     final theme = Theme.of(context);
-    // Show confirmation dialog
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -261,7 +243,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
     );
 
-    // Bail early if canceled
     if (confirm != true) return;
 
     if (!mounted) return;
@@ -274,10 +255,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         return;
       }
 
-      // Delete Firestore doc
       await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
 
-      // Delete Auth account
       await user.delete();
 
       if (!mounted) return;
@@ -285,7 +264,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       await FirebaseAuth.instance.signOut();
 
-      // Safe to use navigator here
       navigator.pushNamedAndRemoveUntil('/signIn', (route) => false);
 
     } catch (e) {
@@ -333,7 +311,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Avatar
                           Center(
                             child: Stack(
                               alignment: Alignment.bottomRight,
@@ -369,7 +346,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                           const SizedBox(height: 24),
 
-                          // Name
                           _LabeledField(
                             label: 'Name',
                             child: TextFormField(
@@ -396,7 +372,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                           const SizedBox(height: 12),
 
-                          // Email (read-only)
                           _LabeledField(
                             label: 'Email',
                             child: TextFormField(
@@ -412,7 +387,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                           const SizedBox(height: 12),
 
-                          // Location (as text field per your choice)
                           _LabeledField(
                             label: 'Location',
                             child: TextFormField(
@@ -436,7 +410,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                           const SizedBox(height: 12),
 
-                          // Bio
                           _LabeledField(
                             label: 'Bio',
                             child: TextFormField(
@@ -462,7 +435,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                           const Spacer(),
 
-                          // Save button
                           SizedBox(
                             height: 48,
                             width: double.infinity, // full width
@@ -490,10 +462,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               ),
                             ),
                           ),
-                          // spacing between Save and Delete
                           const SizedBox(height: 12),
 
-// Delete Account button
                           SizedBox(
                             width: double.infinity,
                             height: 45,
@@ -626,7 +596,6 @@ class _LabeledField extends StatelessWidget {
                 ?.copyWith(color: colorScheme.onSurface)),
         const SizedBox(height: 6),
         Theme(
-          // Slightly rounded + filled fields for modern look
           data: theme.copyWith(
             inputDecorationTheme: theme.inputDecorationTheme.copyWith(
               filled: true,

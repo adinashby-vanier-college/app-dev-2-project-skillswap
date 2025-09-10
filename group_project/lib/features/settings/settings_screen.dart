@@ -10,6 +10,7 @@ import 'help_center_screen.dart';
 import 'send_feedback_screen.dart';
 import 'contact_us_screen.dart';
 
+/// Main settings screen with navigation to various settings sections.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 

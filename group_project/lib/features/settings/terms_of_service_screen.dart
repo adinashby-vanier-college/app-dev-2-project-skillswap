@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Screen displaying the terms of service.
 class TermsOfServiceScreen extends StatelessWidget {
   const TermsOfServiceScreen({super.key});
 

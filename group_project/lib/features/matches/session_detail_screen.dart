@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../chat/session_service.dart';
 
+/// Screen displaying detailed information for a specific session.
 class SessionDetailScreen extends StatelessWidget {
   final Map<String, dynamic> session;
 

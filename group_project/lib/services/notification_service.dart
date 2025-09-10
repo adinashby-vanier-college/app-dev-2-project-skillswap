@@ -5,6 +5,7 @@ import '../features/notifications/models/notification_model.dart';
 import 'fcm_service.dart';
 import 'notification_settings_service.dart';
 
+/// Service for managing user notifications and push messages.
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -17,7 +18,7 @@ class NotificationService {
   
   String? get currentUserId => _auth.currentUser?.uid;
 
-  // Create a notification in Firestore
+  /// Creates a notification in Firestore and sends push notification if enabled.
   Future<void> createNotification({
     required String userId,
     required String title,

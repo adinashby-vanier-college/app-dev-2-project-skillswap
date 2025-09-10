@@ -6,6 +6,7 @@ import 'chat_screen.dart';
 import '../../../widgets/profile_avatar.dart';
 import '../profile/view_profile_screen.dart';
 
+/// Screen displaying list of user's chat conversations.
 class ConversationsScreen extends StatefulWidget {
   const ConversationsScreen({super.key});
 
@@ -86,7 +87,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       return _userNamesCache[userId]!;
     }
 
-    // Handle mock/debug users
     final mockUsers = ['Alice', 'Bob', 'Carol', 'Dave', 'Eve', 'Frank', 'Grace', 'Hank'];
     if (mockUsers.contains(userId)) {
       _userNamesCache[userId] = userId;
@@ -173,7 +173,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                 orElse: () => '',
               );
               
-              // Skip conversations with invalid partner IDs
               if (chatPartnerId.isEmpty || chatPartnerId == 'Unknown') {
                 return const SizedBox.shrink();
               }
@@ -210,7 +209,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                     return ListTile(
                       leading: GestureDetector(
                         onTap: () {
-                          // Handle mock users - they don't have profiles in Firestore
                           final mockUsers = ['Alice', 'Bob', 'Carol', 'Dave', 'Eve', 'Frank', 'Grace', 'Hank'];
                           if (mockUsers.contains(chatPartnerId)) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -228,7 +226,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                         },
                         child: ProfileAvatar(
                           displayName: userName,
-                          // imageUrl: null, // If you have a photo URL, pass it here
                         ),
                       ),
                       title: Text('Chat with $userName'),

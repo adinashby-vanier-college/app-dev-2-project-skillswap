@@ -1,3 +1,4 @@
+/// Mock conversation data for testing and development.
 final List<Map<String, dynamic>> mockConversations = [
   {
     'id': 'convo1',

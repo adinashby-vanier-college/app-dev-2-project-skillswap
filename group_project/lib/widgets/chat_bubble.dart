@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'profile_avatar.dart';
 
+/// Widget for displaying chat message bubbles.
 class ChatBubble extends StatefulWidget {
   final String message;
   final bool isMe;

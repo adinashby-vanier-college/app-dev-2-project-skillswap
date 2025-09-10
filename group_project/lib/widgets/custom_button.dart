@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../utils/custom_colors.dart';
 
+/// Reusable button widget with consistent styling across the app.
 class CustomButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color color;
   final Color textColor;
 

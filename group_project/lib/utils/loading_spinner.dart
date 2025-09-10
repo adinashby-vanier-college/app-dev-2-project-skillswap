@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Simple loading spinner widget.
 class LoadingSpinner extends StatelessWidget {
   const LoadingSpinner({super.key});
 

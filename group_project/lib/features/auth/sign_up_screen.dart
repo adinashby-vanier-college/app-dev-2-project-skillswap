@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_service.dart';
 import 'verify_email_screen.dart';
 
+/// Screen for user registration with email and password.
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
 

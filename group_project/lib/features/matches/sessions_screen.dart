@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'session_detail_screen.dart';
 
+/// Screen displaying sessions for a specific match.
 class SessionsScreen extends StatelessWidget {
   final String matchId;
   final String matchName;

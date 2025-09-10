@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/session_proposal.dart';
 import '../session_service.dart';
 
+/// Widget for displaying session proposals in chat.
 class SessionProposalWidget extends StatelessWidget {
   final SessionProposal proposal;
   final String currentUserId;
@@ -72,7 +73,6 @@ class SessionProposalWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             children: [
               Icon(
@@ -116,7 +116,6 @@ class SessionProposalWidget extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           
-          // Title and Skills
           Text(
             proposal.title,
             style: const TextStyle(
@@ -134,7 +133,6 @@ class SessionProposalWidget extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           
-          // Date and Time
           Row(
             children: [
               Icon(Icons.calendar_today, size: 16, color: colorScheme.onSurface.withValues(alpha: 153/255)),
@@ -170,7 +168,6 @@ class SessionProposalWidget extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           
-          // Location
           Row(
             children: [
               Icon(
@@ -207,7 +204,6 @@ class SessionProposalWidget extends StatelessWidget {
             ],
           ),
           
-          // Notes
           if (proposal.notes?.isNotEmpty == true) ...[
             const SizedBox(height: 8),
             Container(
@@ -228,11 +224,9 @@ class SessionProposalWidget extends StatelessWidget {
             ),
           ],
           
-          // Action Buttons
           if (proposal.status == SessionProposalStatus.pending) ...[
             const SizedBox(height: 16),
             if (!isProposer) ...[
-              // Recipient buttons: Decline and Accept
               Row(
                 children: [
                   Expanded(
@@ -261,7 +255,6 @@ class SessionProposalWidget extends StatelessWidget {
                 ],
               ),
             ] else ...[
-              // Proposer button: Cancel
               Row(
                 children: [
                   Expanded(
@@ -280,7 +273,6 @@ class SessionProposalWidget extends StatelessWidget {
             ],
           ],
           
-          // Timestamp
           const SizedBox(height: 8),
           Text(
             'Proposed ${_formatTimestamp(proposal.createdAt)}',
@@ -352,7 +344,6 @@ class SessionProposalWidget extends StatelessWidget {
   }
 
   void _cancelProposal(BuildContext context) async {
-    // Show confirmation dialog
     final shouldCancel = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {

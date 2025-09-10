@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
 
+/// Screen for managing app theme settings.
 class ThemeSettingsScreen extends StatefulWidget {
   const ThemeSettingsScreen({super.key});
 

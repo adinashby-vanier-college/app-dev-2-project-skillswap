@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../session_service.dart';
 
+/// Dialog for creating new session proposals.
 class SessionProposalDialog extends StatefulWidget {
   final String conversationId;
   final String recipientId;
@@ -68,7 +69,6 @@ class _SessionProposalDialogState extends State<SessionProposalDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
               Row(
                 children: [
                   Icon(Icons.event_note, color: colorScheme.primary, size: 20),
@@ -97,7 +97,6 @@ class _SessionProposalDialogState extends State<SessionProposalDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Title
                       TextFormField(
                         controller: _titleController,
                         decoration: const InputDecoration(
@@ -115,7 +114,6 @@ class _SessionProposalDialogState extends State<SessionProposalDialog> {
                       ),
                       const SizedBox(height: 12),
                       
-                      // Skills
                       TextFormField(
                         controller: _skillsController,
                         decoration: const InputDecoration(
@@ -133,7 +131,6 @@ class _SessionProposalDialogState extends State<SessionProposalDialog> {
                       ),
                       const SizedBox(height: 12),
                       
-                      // Date & Time Row
                       Row(
                         children: [
                           Expanded(
@@ -199,7 +196,6 @@ class _SessionProposalDialogState extends State<SessionProposalDialog> {
                       ),
                       const SizedBox(height: 12),
                       
-                      // Duration
                       DropdownButtonFormField<String>(
                         value: _selectedDuration,
                         decoration: const InputDecoration(
@@ -221,7 +217,6 @@ class _SessionProposalDialogState extends State<SessionProposalDialog> {
                       ),
                       const SizedBox(height: 12),
                       
-                      // Type
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -267,7 +262,6 @@ class _SessionProposalDialogState extends State<SessionProposalDialog> {
                       ),
                       const SizedBox(height: 6),
                       
-                      // Location
                       TextFormField(
                         controller: _locationController,
                         decoration: InputDecoration(
@@ -291,7 +285,6 @@ class _SessionProposalDialogState extends State<SessionProposalDialog> {
                       ),
                       const SizedBox(height: 12),
                       
-                      // Notes
                       TextFormField(
                         controller: _notesController,
                         decoration: const InputDecoration(
@@ -310,7 +303,6 @@ class _SessionProposalDialogState extends State<SessionProposalDialog> {
               
               const SizedBox(height: 16),
               
-              // Action Buttons
               Row(
                 children: [
                   Expanded(

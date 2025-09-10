@@ -13,6 +13,7 @@ import '../notifications/notifications_screen.dart';
 import '../chat/chat_service.dart';
 import '../chat/models/conversation_preview.dart';
 
+/// Main home screen with bottom navigation.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 

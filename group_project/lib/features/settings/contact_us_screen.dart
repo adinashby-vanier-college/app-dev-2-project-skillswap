@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// Screen displaying contact information and support options.
 class ContactUsScreen extends StatelessWidget {
   const ContactUsScreen({super.key});
 

@@ -1,3 +1,4 @@
+/// Model representing a preview of a conversation in the chat list.
 class ConversationPreview {
   final String id;
   final String lastMessage;

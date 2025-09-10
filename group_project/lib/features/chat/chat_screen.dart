@@ -10,6 +10,7 @@ import 'session_service.dart';
 import 'widgets/session_proposal_dialog.dart';
 import 'widgets/session_proposal_widget.dart';
 
+/// Screen for displaying and managing chat conversations.
 class ChatScreen extends StatefulWidget {
   final String conversationId;
   final bool isArchived;
@@ -36,7 +37,6 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _otherUserId;
   String _otherUserName = 'SkillSwap Chat';
 
-  // Cache for user data
   final Map<String, Map<String, String?>> _userCache = {};
 
   @override
@@ -54,22 +54,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _chatService.markMessagesRead(widget.conversationId);
 
-    // Load current user data first, then set loading to false
     _initializeUserData();
   }
 
-  // Initialize user data and then set loading to false
+  /// Initializes user data and sets loading state.
   Future<void> _initializeUserData() async {
-    // Load current user data
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId != null) {
       await _loadUserData(currentUserId);
       
-      // Get the other user's ID from the conversation
       await _getOtherUserId();
     }
 
-    // Add a small delay to ensure everything is loaded
     await Future.delayed(const Duration(milliseconds: 500));
 
     if (mounted) {
@@ -77,7 +73,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  // Get the other user's ID and name from conversation participants
+  /// Gets the other user's ID and name from conversation participants.
   Future<void> _getOtherUserId() async {
     try {
       final conversationDoc = await FirebaseFirestore.instance
@@ -98,7 +94,7 @@ class _ChatScreenState extends State<ChatScreen> {
         if (_otherUserId != null && _otherUserId!.isNotEmpty) {
           _otherUserName = await _getUserName(_otherUserId!);
           if (mounted) {
-            setState(() {}); // Trigger rebuild to show the name in AppBar
+            setState(() {});
           }
         }
       }
@@ -107,9 +103,8 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  // Get user name with mock user support
+  /// Gets user name with mock user support.
   Future<String> _getUserName(String userId) async {
-    // Handle mock/debug users
     final mockUsers = ['Alice', 'Bob', 'Carol', 'Dave', 'Eve', 'Frank', 'Grace', 'Hank'];
     if (mockUsers.contains(userId)) {
       return userId;
@@ -135,9 +130,8 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  // Load user data for a specific user ID
+  /// Loads user data for a specific user ID.
   Future<Map<String, String?>> _loadUserData(String userId) async {
-    // Return cached data if available
     if (_userCache.containsKey(userId)) {
       return _userCache[userId]!;
     }
@@ -150,7 +144,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
       final userData = userDoc.data();
 
-      // For current user, also try Firebase Auth as fallback
       final currentUser = FirebaseAuth.instance.currentUser;
       final isCurrentUser = currentUser?.uid == userId;
 
@@ -160,7 +153,6 @@ class _ChatScreenState extends State<ChatScreen> {
       if (userData?['name'] != null) {
         name = userData!['name'].toString();
       } else if (isCurrentUser && currentUser != null) {
-        // Fallback to Firebase Auth data for current user
         name = currentUser.displayName ??
             currentUser.email?.split('@')[0] ??
             'You';
@@ -216,8 +208,6 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!_scrollController.hasClients) return;
     
     final position = _scrollController.position;
-    // Show FAB when scrolled UP towards older messages (away from top/newest)
-    // Since newest messages are at position 0 (top), show FAB when scrolled down from top
     final shouldShowFAB = position.pixels > 100;
     
     if (shouldShowFAB != _showScrollToLatest) {
@@ -230,7 +220,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _scrollToLatest() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
-        0.0, // Scroll to top where newest messages are
+        0.0,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
@@ -337,7 +327,6 @@ class _ChatScreenState extends State<ChatScreen> {
                             return const Center(child: Text('No messages yet'));
                           }
 
-                          // Combine messages and proposals, sorted by timestamp
                           final allItems = <dynamic>[...messages, ...proposals];
                           allItems.sort((a, b) {
                             final aTime = a is Message ? a.timestamp : (a as SessionProposal).createdAt;
@@ -362,7 +351,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                 final message = item;
                                 final isSystemMessage = message.senderId == 'system';
                                 
-                                // Handle system messages differently
                                 if (isSystemMessage) {
                                   return Container(
                                     margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
@@ -396,7 +384,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                   );
                                 }
                                 
-                                // Handle regular user messages
                                 final isMe = message.senderId == _chatService.currentUserId;
 
                                 return FutureBuilder<Map<String, String?>>(

@@ -7,6 +7,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import '../profile/view_profile_screen.dart';
 
+/// Screen displaying users on a map based on their location.
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 

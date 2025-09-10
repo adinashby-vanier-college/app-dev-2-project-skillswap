@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_service.dart';
 import '../../utils/custom_colors.dart';
 import '../../widgets/custom_button.dart';
@@ -16,8 +15,17 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
+  bool _isGoogleLoading = false;
+  bool _isTwitterLoading = false;
 
   Future<void> _signIn() async {
+    if (_isLoading) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
+    
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     try {
@@ -33,26 +41,71 @@ class _SignInScreenState extends State<SignInScreen> {
       scaffoldMessenger.showSnackBar(
         SnackBar(content: Text(e.toString())),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  Future<void> _signInWithTwitter() async {
+  Future<void> _signInWithGoogle() async {
+    if (_isGoogleLoading) return;
+    
+    setState(() {
+      _isGoogleLoading = true;
+    });
+    
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     try {
-      final twitterProvider = TwitterAuthProvider();
-      await FirebaseAuth.instance.signInWithProvider(twitterProvider);
-
-      final user = FirebaseAuth.instance.currentUser;
+      final user = await _authService.signInWithGoogle();
       scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text("Twitter sign in: ${user?.displayName ?? "Success"}")),
+        SnackBar(content: Text("Google sign in: ${user.displayName ?? "Success"}")),
       );
+      navigator.pushReplacementNamed('/home');
+    } catch (e) {
+      debugPrint("Google sign-in error details: $e");
+      debugPrint("Error type: ${e.runtimeType}");
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text("Google login failed: ${e.toString()}")),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGoogleLoading = false;
+        });
+      }
+    }
+  }
 
+
+  Future<void> _signInWithTwitter() async {
+    if (_isTwitterLoading) return;
+    
+    setState(() {
+      _isTwitterLoading = true;
+    });
+    
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      final user = await _authService.signInWithTwitter();
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text("Twitter sign in: ${user.displayName ?? "Success"}")),
+      );
       navigator.pushReplacementNamed('/home');
     } catch (e) {
       scaffoldMessenger.showSnackBar(
         SnackBar(content: Text("Twitter login failed: $e")),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTwitterLoading = false;
+        });
+      }
     }
   }
 
@@ -112,27 +165,41 @@ class _SignInScreenState extends State<SignInScreen> {
               ),
               const SizedBox(height: 24),
               CustomButton(
-                text: "Sign in",
-                onPressed: _signIn,
+                text: _isLoading ? "Signing in..." : "Sign in",
+                onPressed: _isLoading ? null : _signIn,
               ),
               const SizedBox(height: 16),
               const Text("or use one of your social profiles"),
               const SizedBox(height: 16),
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: _signInWithTwitter,
-                    icon: const Icon(Icons.alternate_email),
-                    label: const Text("Twitter"),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _isGoogleLoading ? null : () => _signInWithGoogle(),
+                      icon: _isGoogleLoading 
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.g_mobiledata),
+                      label: Text(_isGoogleLoading ? "Loading..." : "Google"),
+                    ),
                   ),
                   const SizedBox(width: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // TODO: Facebook login implementation
-                    },
-                    icon: const Icon(Icons.facebook),
-                    label: const Text("Facebook"),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _isTwitterLoading ? null : () => _signInWithTwitter(),
+                      icon: _isTwitterLoading 
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.close, size: 20),
+                      label: Text(_isTwitterLoading ? "Loading..." : "X"),
+                    ),
                   ),
                 ],
               ),

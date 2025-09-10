@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Screen for sending feedback and bug reports.
 class SendFeedbackScreen extends StatefulWidget {
   const SendFeedbackScreen({super.key});
 

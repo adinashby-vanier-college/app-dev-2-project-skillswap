@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Reusable circular profile avatar widget for chat bubbles
-/// Handles Firebase URLs with fallback to initials
+/// Reusable circular profile avatar widget with fallback to initials.
 class ProfileAvatar extends StatelessWidget {
   final double size;
   final String? imageUrl;
@@ -44,7 +43,7 @@ class ProfileAvatar extends StatelessWidget {
             ? NetworkImage(imageUrl!)
             : null,
         onBackgroundImageError: (imageUrl != null && imageUrl!.isNotEmpty)
-            ? (_, _) {} // Handle error silently, fallback to initials
+            ? (_, _) {}
             : null,
         child: (imageUrl == null || imageUrl!.isEmpty)
             ? Text(
@@ -55,7 +54,7 @@ class ProfileAvatar extends StatelessWidget {
             color: defaultTextColor,
           ),
         )
-            : null, // Don't show text if image is loading/present
+            : null,
       ),
     );
   }

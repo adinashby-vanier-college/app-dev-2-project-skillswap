@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+/// Service for managing user notification preferences.
 class NotificationSettingsService {
   static final NotificationSettingsService _instance = NotificationSettingsService._internal();
   factory NotificationSettingsService() => _instance;

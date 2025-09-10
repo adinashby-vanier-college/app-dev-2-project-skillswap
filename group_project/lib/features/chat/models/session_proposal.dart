@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Status of a session proposal.
 enum SessionProposalStatus {
   pending,
   accepted,
@@ -8,6 +9,7 @@ enum SessionProposalStatus {
   expired,
 }
 
+/// Model representing a skill-sharing session proposal.
 class SessionProposal {
   final String id;
   final String conversationId;
@@ -19,7 +21,7 @@ class SessionProposal {
   final String proposedTime;
   final String duration;
   final String location;
-  final String type; // 'in-person' or 'virtual'
+  final String type;
   final String? notes;
   final SessionProposalStatus status;
   final DateTime createdAt;
@@ -43,6 +45,7 @@ class SessionProposal {
     this.respondedAt,
   });
 
+  /// Creates a SessionProposal from Firestore data.
   factory SessionProposal.fromMap(Map<String, dynamic> data, String id) {
     return SessionProposal(
       id: id,
@@ -68,6 +71,7 @@ class SessionProposal {
     );
   }
 
+  /// Converts the SessionProposal to a map for Firestore.
   Map<String, dynamic> toMap() {
     return {
       'conversationId': conversationId,
@@ -87,6 +91,7 @@ class SessionProposal {
     };
   }
 
+  /// Creates a copy with updated properties.
   SessionProposal copyWith({
     String? id,
     String? conversationId,
