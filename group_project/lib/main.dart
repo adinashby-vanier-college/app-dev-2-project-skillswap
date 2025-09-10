@@ -5,11 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/theme_provider.dart';
 import 'features/auth/sign_in_screen.dart';
-import 'features/auth/sign_up_screen.dart';
 import 'features/home/home_screen.dart';
-import 'features/chat/conversations_screen.dart';
-import 'features/chat/archived_chats_screen.dart';
 import 'services/fcm_service.dart';
+import 'services/navigation_service.dart';
 
 /// Background handler for Firebase messages (must be top-level).
 @pragma('vm:entry-point')
@@ -42,6 +40,7 @@ class SkillSwapApp extends StatelessWidget {
         builder: (context, themeProvider, child) {
           return MaterialApp(
             title: 'SkillSwap',
+            navigatorKey: NavigationService.navigatorKey,
             themeMode: themeProvider.themeMode,
             theme: ThemeData(
               primarySwatch: Colors.indigo,
@@ -55,13 +54,7 @@ class SkillSwapApp extends StatelessWidget {
             ),
             debugShowCheckedModeBanner: false,
             home: const AuthGate(),
-            routes: {
-              '/signIn': (context) => const SignInScreen(),
-              '/signUp': (context) => const SignUpScreen(),
-              '/home': (context) => const HomeScreen(),
-              '/conversations': (context) => const ConversationsScreen(),
-              '/archivedChats': (context) => const ArchivedChatsScreen(),
-            },
+            onGenerateRoute: NavigationService.generateRoute,
           );
         },
       ),

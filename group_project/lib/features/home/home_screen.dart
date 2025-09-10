@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:group_project/features/settings/settings_screen.dart';
 import '../../providers/theme_provider.dart';
-import '../profile/edit_profile_screen.dart';
 import '../profile/edit_skills_screen.dart';
 import '../matches/matches_screen.dart';
 import '../matches/match_history_screen.dart';
@@ -12,6 +11,7 @@ import '../../services/notification_service.dart';
 import '../notifications/notifications_screen.dart';
 import '../chat/chat_service.dart';
 import '../chat/models/conversation_preview.dart';
+import '../../services/navigation_service.dart';
 
 /// Main home screen with bottom navigation.
 class HomeScreen extends StatefulWidget {
@@ -31,9 +31,8 @@ class _HomeScreenState extends State<HomeScreen> {
   User? get _user => FirebaseAuth.instance.currentUser;
 
   Future<void> _openEditProfile() async {
-    final updated = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+    final updated = await NavigationService().navigateTo(
+      NavigationService.editProfile,
     );
     if (updated == true) {
       await FirebaseAuth.instance.currentUser?.reload();
@@ -56,18 +55,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openMessages() {
-    Navigator.pushNamed(context, '/conversations');
+    NavigationService().navigateTo(NavigationService.conversations);
   }
 
   void _performSearch(String query) {
     if (query.trim().isEmpty) return;
     
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MatchesScreen(searchQuery: query.trim()),
-      ),
-    );
+    NavigationService().navigateToMatches(searchQuery: query.trim());
   }
 
 
@@ -185,9 +179,8 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip: 'Sign out',
             icon: Icon(Icons.logout, color: colorScheme.onSurface),
             onPressed: () async {
-              final navigator = Navigator.of(context);
               await FirebaseAuth.instance.signOut();
-              navigator.pushReplacementNamed('/');
+              NavigationService().navigateToSignIn();
             },
           ),
         ],

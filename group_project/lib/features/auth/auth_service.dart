@@ -89,6 +89,21 @@ class AuthService {
     }
   }
 
+  /// Sends password reset email to the specified email address.
+  Future<void> sendPasswordResetEmail(String email) async {
+    AppLogger.auth('sendPasswordResetEmail called, email=$email');
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+      AppLogger.auth('Password reset email sent to $email');
+    } catch (e) {
+      AppLogger.error('Password reset error', tag: 'AUTH', error: e);
+      throw AuthExceptionMapper.mapFirebaseException(
+        e, 
+        'Failed to send password reset email. Please check the email address.'
+      );
+    }
+  }
+
   /// Reloads user and returns email verification status.
   Future<bool> reloadAndCheckEmailVerified() async {
     final user = _auth.currentUser;

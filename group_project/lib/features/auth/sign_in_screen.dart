@@ -3,6 +3,7 @@ import 'auth_service.dart';
 import 'auth_exceptions.dart';
 import '../../utils/custom_colors.dart';
 import '../../widgets/custom_button.dart';
+import '../../services/navigation_service.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -19,6 +20,7 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _isLoading = false;
   bool _isGoogleLoading = false;
   bool _isTwitterLoading = false;
+  bool _isResetLoading = false;
 
   Future<void> _signIn() async {
     if (_isLoading) return;
@@ -28,7 +30,6 @@ class _SignInScreenState extends State<SignInScreen> {
     });
     
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
     try {
       await _authService.signInWithEmail(
         _emailController.text.trim(),
@@ -38,7 +39,7 @@ class _SignInScreenState extends State<SignInScreen> {
         const SnackBar(content: Text("Signed in successfully")),
       );
       
-      navigator.pushReplacementNamed('/home');
+      NavigationService().navigateToHome();
     } on AuthException catch (e) {
       scaffoldMessenger.showSnackBar(
         SnackBar(
@@ -67,14 +68,13 @@ class _SignInScreenState extends State<SignInScreen> {
     });
     
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
     try {
       final user = await _authService.signInWithGoogle();
       scaffoldMessenger.showSnackBar(
         SnackBar(content: Text("Google sign in: ${user.displayName ?? "Success"}")),
       );
       
-      navigator.pushReplacementNamed('/home');
+      NavigationService().navigateToHome();
     } on AuthException catch (e) {
       scaffoldMessenger.showSnackBar(
         SnackBar(
@@ -104,14 +104,13 @@ class _SignInScreenState extends State<SignInScreen> {
     });
     
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
     try {
       final user = await _authService.signInWithTwitter();
       scaffoldMessenger.showSnackBar(
         SnackBar(content: Text("Twitter sign in: ${user.displayName ?? "Success"}")),
       );
       
-      navigator.pushReplacementNamed('/home');
+      NavigationService().navigateToHome();
     } on AuthException catch (e) {
       scaffoldMessenger.showSnackBar(
         SnackBar(
@@ -129,6 +128,66 @@ class _SignInScreenState extends State<SignInScreen> {
           _isTwitterLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _forgotPassword() async {
+    if (_isResetLoading) return;
+    
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your email address first'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Basic email validation
+    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid email address'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isResetLoading = true);
+    
+    try {
+      await _authService.sendPasswordResetEmail(email);
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Password reset instructions sent to $email\n\nPlease check your inbox (and spam folder)'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Network error: Please check your internet connection'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isResetLoading = false);
     }
   }
 
@@ -191,6 +250,20 @@ class _SignInScreenState extends State<SignInScreen> {
                 text: _isLoading ? "Signing in..." : "Sign in",
                 onPressed: _isLoading ? null : _signIn,
               ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: _isResetLoading ? null : _forgotPassword,
+                  child: Text(
+                    _isResetLoading ? "Sending..." : "Forgot Password?",
+                    style: TextStyle(
+                      color: _isResetLoading ? Colors.grey : CustomColors.primaryRed,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
               const Text("or use one of your social profiles"),
               const SizedBox(height: 16),
@@ -230,15 +303,10 @@ class _SignInScreenState extends State<SignInScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  const Text("Don't have an account? "),
                   TextButton(
                     onPressed: () {
-                      // TODO: implement Forgot Password
-                    },
-                    child: const Text("Forgot Password?"),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/signUp');
+                      NavigationService().navigateTo(NavigationService.signUp);
                     },
                     child: const Text(
                       "Sign Up",
