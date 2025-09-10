@@ -163,10 +163,14 @@ class _MapScreenState extends State<MapScreen> {
         lat = data['lat']?.toDouble();
         lng = data['lng']?.toDouble();
       } else if (data['location'] != null) {
-        // New format 
-        final location = data['location'] as Map<String, dynamic>;
-        lat = location['latitude']?.toDouble();
-        lng = location['longitude']?.toDouble();
+        // New format with location object containing latitude/longitude
+        try {
+          final location = data['location'] as Map<String, dynamic>;
+          lat = location['latitude']?.toDouble();
+          lng = location['longitude']?.toDouble();
+        } catch (e) {
+          // Silently handle parsing errors
+        }
       }
 
       // Skip if no valid coordinates
@@ -191,11 +195,11 @@ class _MapScreenState extends State<MapScreen> {
         otherWanted = [otherSkillsWantData];
       }
 
-      // Apply matching logic - only show users who are mutual matches
+      // Apply matching logic - use same logic as MatchesScreen (mutual matches)
       bool iCanLearn = myWanted.any((skill) => otherOffered.contains(skill));
       bool iCanTeach = myOffered.any((skill) => otherWanted.contains(skill));
 
-      // Only add marker if both conditions are met (mutual match)
+      // Only show users who are mutual matches (same as MatchesScreen)
       if (iCanLearn && iCanTeach) {
         final userId = doc.id;
         final userName = data['name'] ?? "Unknown";
